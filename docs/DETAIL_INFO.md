@@ -112,6 +112,7 @@ JWT token
 
 ### 1. 도서 전체 조회
 
+- `books 테이블`, `SELECT`로 전체 내용 조회
 - 수정할 내용: 8개씩 보내주기
 - 이미지 추가
 
@@ -148,6 +149,7 @@ JWT token
 
 ### 2. 도서 카테고리별 조회
 
+- `books 테이블`, `SELECT`로 해당 조건에 맞는 내용 조회
 - `new= true`: 신간 조회 (출간일 30일 이내)
 
 #### ■ 기본정보
@@ -188,6 +190,8 @@ JWT token
 ```
 
 ### 3. 도서 개별 조회
+
+- `books 테이블`, `SELECT`로 id 내용 조회
 
 #### ■ 기본정보
 
@@ -235,7 +239,8 @@ JWT token
 
 ### 4. 도서 검색 조회
 
-검색어를 query로 받아서 조회
+- 검색어를 query로 받아서 조회
+- `books 테이블`, `SELECT`로 title과 일치하는 query 내용 조회
 
 #### ■ 기본정보
 
@@ -335,7 +340,7 @@ JWT token
 | 이름     | 타입   | 설명                   |
 | -------- | ------ | ---------------------- |
 | cart_id  | int    | 장바구니 아이템의 id값 |
-| book_id  | string | 도서 아이디            |
+| book_id  | int    | 도서 아이디            |
 | title    | string | 도서제목               |
 | price    | int    | 가격                   |
 | quantity | int    | 수량                   |

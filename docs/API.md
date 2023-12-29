@@ -123,7 +123,7 @@
 [
   {
     "id": "snow1",
-    "category": "소설",
+    "category_id": 1,
     "title": "크리스마스에 눈이 올까요",
     "summary": "도서를 요약한 내용",
     "author": "김작가",
@@ -164,7 +164,7 @@
 [
   {
     "id": 1,
-    "category": "소설",
+    "category_id": 1,
     "title": "크리스마스에 눈이 올까요",
     "summary": "도서를 요약한 내용",
     "author": "김작가",
@@ -187,21 +187,21 @@
 
 #### ■ 응답 - 바디
 
-| 이름         | 타입    | 설명             |
-| ------------ | ------- | ---------------- |
-| id           | int     | 도서 아이디      |
-| isbn         | int     | isbn (도서 번호) |
-| category     | string  | 도서 카테고리    |
-| index        | string  | 목차             |
-| title        | string  | 도서 제목        |
-| summary      | string  | 도서 요약 (설명) |
-| description  | string  | 상세설명         |
-| author       | string  | 작가             |
-| pages        | int     | 총 페이지        |
-| published_at | string  | 출간일           |
-| price        | int     | 가격             |
-| likes        | int     | 좋아요 수        |
-| liked        | boolean | 좋아요 클릭 여부 |
+| 이름         | 타입    | 설명                 |
+| ------------ | ------- | -------------------- |
+| id           | int     | 도서 아이디          |
+| isbn         | int     | isbn (도서 번호)     |
+| category_id  | int     | 도서 카테고리 아이디 |
+| index        | string  | 목차                 |
+| title        | string  | 도서 제목            |
+| summary      | string  | 도서 요약 (설명)     |
+| description  | string  | 상세설명             |
+| author       | string  | 작가                 |
+| pages        | int     | 총 페이지            |
+| published_at | string  | 출간일               |
+| price        | int     | 가격                 |
+| likes        | int     | 좋아요 수            |
+| liked        | boolean | 좋아요 클릭 여부     |
 
 #### ■ 응답 예시
 
@@ -209,7 +209,7 @@
 {
   "id": 1,
   "isbn": 1230123412340,
-  "category": "소설",
+  "category_id": 1,
   "index": "목차",
   "title": "크리스마스에 눈이 올까요",
   "summary": "도서를 요약한 내용",
@@ -247,24 +247,24 @@
 
 #### Book
 
-| 이름         | 타입    | 설명             |
-| ------------ | ------- | ---------------- |
-| id           | int     | 도서 아이디      |
-| category     | string  | 도서 카테고리    |
-| title        | string  | 도서 제목        |
-| summary      | string  | 도서 요약 (설명) |
-| author       | string  | 작가             |
-| published_at | string  | 출간일           |
-| price        | int     | 가격             |
-| likes        | int     | 좋아요 수        |
-| liked        | boolean | 좋아요 클릭 여부 |
+| 이름         | 타입    | 설명                 |
+| ------------ | ------- | -------------------- |
+| id           | int     | 도서 아이디          |
+| category_id  | int     | 도서 카테고리 아이디 |
+| title        | string  | 도서 제목            |
+| summary      | string  | 도서 요약 (설명)     |
+| author       | string  | 작가                 |
+| published_at | string  | 출간일               |
+| price        | int     | 가격                 |
+| likes        | int     | 좋아요 수            |
+| liked        | boolean | 좋아요 클릭 여부     |
 
 ```json
 [
   {
     "id": 1,
     "isbn": 1230123412340,
-    "category": "소설",
+    "category_id": 1,
     "index": "목차",
     "title": "크리스마스에 눈이 올까요",
     "summary": "도서를 요약한 내용",
