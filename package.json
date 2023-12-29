@@ -8,6 +8,6 @@
     "mysql2": "^3.6.5"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "nodemon app.js"
   }
 }

@@ -109,7 +109,7 @@ router
       if (rows.affectedRows > 0) {
         res.status(200).send({ message: "비밀번호 초기화 성공" });
       } else {
-        res.status(400).send({ message: "비밀번호 초기화 실패" });
+        res.status(400).send({ message: "비밀번호 변경 실패" });
       }
     } catch (err) {
       console.error(err);
