@@ -1,10 +1,9 @@
 const { body, validationResult } = require("express-validator");
-const { ReasonPhrases, StatusCodes, getReasonPhrase, getStatusCode } = require("http-status-codes");
+const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
 const conn = require("../mysql");
 const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");
 
 dotenv.config();
 
