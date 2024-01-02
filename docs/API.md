@@ -50,9 +50,9 @@
 
 #### ■ 기본정보
 
-| 메서드 |  URL   | status coode - Success |     status coode - fail     |
-| :----: | :----: | :--------------------: | :-------------------------: |
-|  POST  | /login |          200           | 401 Unauthorized(권한 없음) |
+| 메서드 |  URL   | status coode - Success | status coode - fail |
+| :----: | :----: | :--------------------: | :-----------------: |
+|  POST  | /login |          200           |                     |
 
 #### ■ 요청 - 바디
 
