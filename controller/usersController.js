@@ -48,7 +48,7 @@ const joinUser = async (req, res, next) => {
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: "회원가입 완료" });
     } else {
-      res.status(400).send({ message: "회원가입 실패" });
+      res.status(StatusCodes.BAD_REQUEST).send({ message: "회원가입 실패" });
     }
   } catch (err) {
     console.error(err);
@@ -59,8 +59,8 @@ const joinUser = async (req, res, next) => {
 const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const sql = "SELECT * FROM users WHERE email = ?";
 
+    const sql = "SELECT * FROM users WHERE email = ?";
     const [rows] = await (await conn).execute(sql, [email]);
     const [loginUser] = rows;
 
