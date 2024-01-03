@@ -1,67 +1,87 @@
 const { StatusCodes } = require("http-status-codes");
 const conn = require("../mysql");
 
-// const categoryJoinQuery = `
-//   SELECT books.*, category.* FROM books
-//   LEFT JOIN category ON category.id = books.category_id
-//   WHERE books.id = ?
-// `;
+/** 카테고리 테이블에서 카테고리명을 조인해서 가져오는 SQL문 만드는 함수
+ * condition:WHERE 조건문
+ * additionalJoin: 추가로 JOIN할 내용
+ */
+const generateBookQuery = (condition, additionalJoin = "") => {
+  if (typeof condition !== "string") {
+    throw new Error("Invalid WHERE condition");
+  }
+  const whereClause = condition ? `WHERE ${condition}` : "";
+  return `
+    SELECT * FROM books 
+    LEFT JOIN category ON category.id = books.category_id
+    ${additionalJoin}
+    ${whereClause}`;
+};
 
 const filteredRecentBooks = (books) => {
+  const MONTHS_TO_SUBTRACT = 1;
   const newBooksPeriod = new Date();
-  newBooksPeriod.setMonth(newBooksPeriod.getMonth() - 1);
+  newBooksPeriod.setMonth(newBooksPeriod.getMonth() - MONTHS_TO_SUBTRACT);
+
   return books.filter((book) => {
     const publishedDate = new Date(book.published_at);
     return publishedDate >= newBooksPeriod;
   });
 };
 
+// 서버 오류 핸들러
+const handleError = (res, error) => {
+  console.error(error);
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: "Internal Server Error" });
+};
+
 const getAllBooks = async (req, res) => {
   try {
     if (req.query) {
       const { categoryId, new: isFilteredRecentBooks } = req.query;
-      const sql = `SELECT * FROM books WHERE category_id = ?`;
+
+      const condition = "category_id = ?";
+      const sql = generateBookQuery(condition);
       const [rows] = await (await conn).execute(sql, [categoryId]);
 
       if (isFilteredRecentBooks) return res.status(StatusCodes.OK).send({ lists: filteredRecentBooks(rows) });
 
       res.status(StatusCodes.OK).send({ lists: rows });
     } else {
-      const sql = "SELECT * FROM books";
+      const sql = generateBookQuery();
       const [rows] = await (await conn).execute(sql);
+
       res.status(StatusCodes.OK).send({ lists: rows });
     }
   } catch (err) {
-    console.error(err);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: "서버 오류" });
+    handleError(res, err);
   }
 };
 
 const getSearchBooks = async (req, res, next) => {
   try {
     const { query } = req.query;
-    const sql =
-      "SELECT id, category_id, title, subtitle, summary, author, published_at, price FROM books WHERE title LIKE CONCAT('%',?,'%')";
+
+    const condition = 'title LIKE CONCAT("%", ?, "%")';
+    const sql = generateBookQuery(condition);
     const [rows] = await (await conn).execute(sql, [query]);
 
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: "서버 오류" });
+    handleError(res, err);
   }
 };
 
 const getIndividualBook = async (req, res, next) => {
   try {
     const { bookId } = req.params;
-    const sql = `SELECT * FROM books 
-      LEFT JOIN category ON category.id = books.category_id 
-      WHERE books.id = ?`;
+
+    const condition = "books.id = ?";
+    const sql = generateBookQuery(condition);
     const [rows] = await (await conn).execute(sql, [bookId]);
+
     res.status(StatusCodes.OK).send(rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: "서버 오류" });
+    handleError(res, err);
   }
 };
 
