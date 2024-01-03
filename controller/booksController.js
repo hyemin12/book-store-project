@@ -21,7 +21,7 @@ const filteredRecentBooks = (books) => {
   });
 };
 
-const getCategoryBooks = async (req, res, next) => {
+const getBooksByCategory = async (req, res, next) => {
   try {
     const categoryId = Number(req.params.categoryId);
     const isFilteredRecentBooks = req.query.new;
@@ -42,7 +42,11 @@ const getCategoryBooks = async (req, res, next) => {
 const getSearchBooks = async (req, res, next) => {
   try {
     const { query } = req.query;
-    res.status(StatusCodes.OK).send({ message: "도서 검색", query });
+    const sql =
+      "SELECT id, category_id, title, subtitle, summary, author, published_at, price FROM books WHERE title LIKE CONCAT('%',?,'%')";
+    const [rows] = await (await conn).execute(sql, [query]);
+
+    res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: "서버 오류" });
@@ -50,13 +54,20 @@ const getSearchBooks = async (req, res, next) => {
 };
 
 const getIndividualBook = async (req, res, next) => {
-  const { bookId } = req.params;
-  res.status(StatusCodes.OK).send({ message: "개별 도서 조회" });
+  try {
+    const { bookId } = req.params;
+    const sql = "SELECT * FROM books WHERE id = ?";
+    const [rows] = await (await conn).execute(sql, [bookId]);
+    res.status(StatusCodes.OK).send(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "서버 오류" });
+  }
 };
 
 module.exports = {
   getAllBooks,
-  getCategoryBooks,
+  getBooksByCategory,
   getSearchBooks,
   getIndividualBook,
 };
