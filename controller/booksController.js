@@ -1,16 +1,11 @@
 const { StatusCodes } = require("http-status-codes");
 const conn = require("../mysql");
 
-const getAllBooks = async (req, res) => {
-  try {
-    const sql = "SELECT * FROM books";
-    const [rows] = await (await conn).execute(sql);
-    res.status(StatusCodes.OK).send({ lists: rows });
-  } catch (err) {
-    console.error(err);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: "서버 오류" });
-  }
-};
+// const categoryJoinQuery = `
+//   SELECT books.*, category.* FROM books
+//   LEFT JOIN category ON category.id = books.category_id
+//   WHERE books.id = ?
+// `;
 
 const filteredRecentBooks = (books) => {
   const newBooksPeriod = new Date();
@@ -21,21 +16,24 @@ const filteredRecentBooks = (books) => {
   });
 };
 
-const getBooksByCategory = async (req, res, next) => {
+const getAllBooks = async (req, res) => {
   try {
-    const categoryId = Number(req.params.categoryId);
-    const isFilteredRecentBooks = req.query.new;
+    if (req.query) {
+      const { categoryId, new: isFilteredRecentBooks } = req.query;
+      const sql = `SELECT * FROM books WHERE category_id = ?`;
+      const [rows] = await (await conn).execute(sql, [categoryId]);
 
-    const sql =
-      "SELECT id, category_id, title, subtitle, summary, author, published_at, price FROM books WHERE category_id = ?";
-    const [rows] = await (await conn).execute(sql, [categoryId]);
+      if (isFilteredRecentBooks) return res.status(StatusCodes.OK).send({ lists: filteredRecentBooks(rows) });
 
-    if (isFilteredRecentBooks) return res.status(StatusCodes.OK).send({ lists: filteredRecentBooks(rows) });
-
-    res.status(StatusCodes.OK).send({ lists: rows });
+      res.status(StatusCodes.OK).send({ lists: rows });
+    } else {
+      const sql = "SELECT * FROM books";
+      const [rows] = await (await conn).execute(sql);
+      res.status(StatusCodes.OK).send({ lists: rows });
+    }
   } catch (err) {
     console.error(err);
-    res.status(500).send({ message: "서버 오류" });
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: "서버 오류" });
   }
 };
 
@@ -56,7 +54,9 @@ const getSearchBooks = async (req, res, next) => {
 const getIndividualBook = async (req, res, next) => {
   try {
     const { bookId } = req.params;
-    const sql = "SELECT * FROM books WHERE id = ?";
+    const sql = `SELECT * FROM books 
+      LEFT JOIN category ON category.id = books.category_id 
+      WHERE books.id = ?`;
     const [rows] = await (await conn).execute(sql, [bookId]);
     res.status(StatusCodes.OK).send(rows[0]);
   } catch (err) {
@@ -67,7 +67,6 @@ const getIndividualBook = async (req, res, next) => {
 
 module.exports = {
   getAllBooks,
-  getBooksByCategory,
   getSearchBooks,
   getIndividualBook,
 };
