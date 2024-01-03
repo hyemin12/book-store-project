@@ -39,9 +39,15 @@ const getAllBooks = async (req, res) => {
     if (req.query) {
       const { categoryId, new: isFilteredRecentBooks } = req.query;
 
-      const condition = "category_id = ?";
+      let condition = "";
+      let params = [];
+
+      if (categoryId) {
+        condition = "category_id = ?";
+        params.push(condition);
+      }
       const sql = generateBookQuery(condition);
-      const [rows] = await (await conn).execute(sql, [categoryId]);
+      const [rows] = await (await conn).execute(sql, params);
 
       if (isFilteredRecentBooks) return res.status(StatusCodes.OK).send({ lists: filteredRecentBooks(rows) });
 

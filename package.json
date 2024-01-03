@@ -1,4 +1,8 @@
 {
+  "name": "book-store-api",
+  "version": "0.0.1",
+  "description": "프로그래머스 데브코스의 두번째 스프린트 프로젝트입니다.",
+  "author": "고혜민",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
