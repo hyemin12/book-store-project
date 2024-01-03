@@ -8,7 +8,7 @@ const getCategory = async (req, res, next) => {
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).send({ message: "서버 오류" });
+    res.status(500).send({ message: "Internal Server Error" });
   }
 };
 
