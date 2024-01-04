@@ -1,3 +1,6 @@
+const { body, validationResult } = require("express-validator");
+const { StatusCodes } = require("http-status-codes");
+
 const validateEmail = body("email")
   .trim()
   .notEmpty()
