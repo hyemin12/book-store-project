@@ -1,4 +1,3 @@
-const { body, validationResult } = require("express-validator");
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
 const conn = require("../mysql");
@@ -103,4 +102,4 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { validates, validatesEmail, joinUser, loginUser, requestResetPassword, resetPassword };
+module.exports = { joinUser, loginUser, requestResetPassword, resetPassword };

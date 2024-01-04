@@ -1,3 +1,5 @@
+const { body, validationResult } = require("express-validator");
+
 const validateEmail = body("email")
   .trim()
   .notEmpty()
