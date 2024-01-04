@@ -1,20 +1,14 @@
 const express = require("express");
-const {
-  validates,
-  validatesEmail,
-  joinUser,
-  loginUser,
-  requestResetPassword,
-  resetPassword,
-} = require("../controller/usersController");
+const { joinUser, loginUser, requestResetPassword, resetPassword } = require("../controller/usersController");
+const { validatesEmailPassword, validatesEmail } = require("../validators/users");
 
 const router = express.Router();
 router.use(express.json());
 
-router.post("/join", validates, joinUser);
+router.post("/join", validatesEmailPassword, joinUser);
 
-router.post("/login", validates, loginUser);
+router.post("/login", validatesEmailPassword, loginUser);
 
-router.route("/reset").post(validatesEmail, requestResetPassword).put(validates, resetPassword);
+router.route("/reset").post(validatesEmail, requestResetPassword).put(validatesEmailPassword, resetPassword);
 
 module.exports = router;
