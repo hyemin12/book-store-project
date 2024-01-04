@@ -9,29 +9,6 @@ dotenv.config();
 
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
 
-// 유효성 검사
-const validateEmail = body("email")
-  .trim()
-  .notEmpty()
-  .withMessage("이메일은 필수 입력")
-  .isEmail()
-  .withMessage("이메일 형식이 올바르지 않음");
-const validatePassword = body("password")
-  .trim()
-  .notEmpty()
-  .withMessage("비밀번호는 필수 입력")
-  .isLength({ min: 8, max: 16 })
-  .withMessage("비밀번호는 8~14글자이어야 함");
-
-const validateAndProceed = (req, res, next) => {
-  const errors = validationResult(req);
-  if (errors.isEmpty()) return next();
-
-  return res.status(StatusCodes.BAD_REQUEST).send(errors.array());
-};
-const validates = [validateEmail, validatePassword, validateAndProceed];
-const validatesEmail = [validateEmail, validateAndProceed];
-
 // 비밀번호 해싱
 const hashPasswordSync = (password) => {
   return bcrypt.hashSync(password, 10);
