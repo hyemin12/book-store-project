@@ -5,16 +5,14 @@ const conn = require("../mysql");
  * condition=WHERE 조건문
  * additional=추가할 내용
  */
-const generateBookQuery = (condition, additional = "") => {
-  if (typeof condition !== "string") {
-    throw new Error("Invalid WHERE condition");
-  }
+const generateBookQuery = (condition, pagenation) => {
   const whereClause = condition ? `WHERE ${condition}` : "";
+  const limitOffsetClause = pagenation ? "LIMIT ? OFFSET ?" : "";
   return `
     SELECT * FROM books 
     LEFT JOIN category ON category.id = books.category_id
-    ${additional}
-    ${whereClause}`;
+    ${whereClause} 
+    ${limitOffsetClause};`;
 };
 
 // 서버 오류 핸들러
@@ -23,35 +21,10 @@ const handleError = (res, error) => {
   res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: "Internal Server Error" });
 };
 
-/** 카테고리별, 신간, 모든 도서를 조회하는 sql문을 만드는 함수
- * categoryId && fetchNewBooks : 카테고리별 신간 조회
- * categoryId: 카테고리별로 조회
- * fetchNewBooks: 신간 조회 (30일)
- * 모두 없다면 모든 도서 조회 *
- */
-const queryForBooks = (categoryId, fetchNewBooks) => {
-  const categoryIdCondition = "category_id = ?";
-  const newBooksCondition = `published_at 
-  BETWEEN DATE_SUB(now(), interval 30 DAY) 
-  AND NOW()`;
-
-  if (categoryId && fetchNewBooks) {
-    return generateBookQuery(`${categoryIdCondition} AND ${newBooksCondition}`);
-  } else if (categoryId) {
-    return generateBookQuery(categoryIdCondition);
-  } else if (fetchNewBooks) {
-    return generateBookQuery(newBooksCondition);
-  } else {
-    return generateBookQuery();
-  }
-};
-
-const getBooks = async (req, res) => {
+const executeQuery = async (res, sql, values) => {
   try {
-    const { categoryId, new: fetchNewBooks } = req.query;
-
-    const sql = queryForBooks(categoryId, fetchNewBooks);
-    const [rows] = await (await conn).execute(sql, [categoryId ? categoryId : null]);
+    console.log(sql, values);
+    const [rows] = await (await conn).execute(sql, values);
 
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
@@ -59,15 +32,63 @@ const getBooks = async (req, res) => {
   }
 };
 
+/** 카테고리별, 신간, 모든 도서를 조회하는 sql문을 만드는 함수
+ * categoryId && fetchNewBooks : 카테고리별 신간 조회
+ * categoryId: 카테고리별로 조회
+ * fetchNewBooks: 신간 조회 (30일)
+ * 모두 없다면 모든 도서 조회
+ */
+const queryForBooks = (categoryId, fetchNewBooks, page) => {
+  const categoryIdCondition = "category_id = ?";
+  const newBooksCondition = `published_at 
+  BETWEEN DATE_SUB(now(), interval 30 DAY) 
+  AND NOW()`;
+  const pageCondition = page ? "LIMIT ? OFFSET ?" : "";
+  let sql = [];
+
+  if (categoryId && fetchNewBooks) {
+    sql.push(`${categoryIdCondition} AND ${newBooksCondition}`, pageCondition);
+  } else if (categoryId) {
+    sql.push(categoryIdCondition, pageCondition);
+  } else if (fetchNewBooks) {
+    sql.push(newBooksCondition, pageCondition);
+  } else {
+    return generateBookQuery(undefined, pageCondition);
+  }
+};
+
+/** sql values의 undefined인 값들을 제거하는 함수 */
+const removeUndefined = (values) => {
+  return values.filter((v) => v !== undefined && v !== null);
+};
+
+const getBooks = async (req, res) => {
+  try {
+    const { categoryId, new: fetchNewBooks, page, limit } = req.query;
+    const offset = page ? limit * (page - 1) : undefined;
+    const parseIntLimit = limit ? parseInt(limit) : undefined;
+
+    const sql = queryForBooks(categoryId, fetchNewBooks, page);
+    const values = removeUndefined([categoryId, fetchNewBooks, parseIntLimit, offset]);
+    console.log(values);
+    executeQuery(res, sql, values);
+  } catch (err) {
+    handleError(res, err);
+  }
+};
+
 const getSearchBooks = async (req, res, next) => {
   try {
-    const { query } = req.query;
+    const { page, limit, query } = req.query;
 
+    const offset = page ? limit * (page - 1) : undefined;
+    const additional = page ? "LIMIT ? OFFSET ?" : "";
     const condition = 'title LIKE CONCAT("%", ?, "%")';
-    const sql = generateBookQuery(condition);
-    const [rows] = await (await conn).execute(sql, [query]);
 
-    res.status(StatusCodes.OK).send({ lists: rows });
+    const sql = generateBookQuery(condition, additional);
+    const values = removeUndefined([query, limit, offset]);
+    console.log(sql, values);
+    executeQuery(res, sql, values);
   } catch (err) {
     handleError(res, err);
   }
@@ -79,9 +100,8 @@ const getIndividualBook = async (req, res, next) => {
 
     const condition = "books.id = ?";
     const sql = generateBookQuery(condition);
-    const [rows] = await (await conn).execute(sql, [bookId]);
 
-    res.status(StatusCodes.OK).send(rows[0]);
+    executeQuery(res, sql, [bookId]);
   } catch (err) {
     handleError(res, err);
   }

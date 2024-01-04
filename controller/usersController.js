@@ -1,11 +1,8 @@
 const { body, validationResult } = require("express-validator");
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
 const conn = require("../mysql");
 const jwt = require("jsonwebtoken");
-
-dotenv.config();
 
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
 
