@@ -1,47 +1,48 @@
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
-const conn = require("../mysql");
 const jwt = require("jsonwebtoken");
 
+const getSqlQueryResult = require("../utils/getSqlQueryResult");
+const handleServerError = require("../utils/handleServerError");
+
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
+const TOKEN_ISSUER = process.env.TOKEN_ISSUER;
+const saltRounds = process.env.SALT_ROUNDS || 10;
 
 // 비밀번호 해싱
 const hashPasswordSync = (password) => {
-  return bcrypt.hashSync(password, 10);
-};
-
-// 서버 오류 핸들러
-const handleError = (res, error) => {
-  console.error(error);
-  res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: "Internal Server Error" });
+  return bcrypt.hashSync(password, saltRounds);
 };
 
 const joinUser = async (req, res, next) => {
+  const { email, password } = req.body;
+  const hashedPassword = hashPasswordSync(password);
+
+  const sql = "INSERT INTO users (email, password) VALUES (?, ?)";
+  const values = [email, hashedPassword];
+
   try {
-    const { email, password } = req.body;
-    const hashedPassword = await hashPasswordSync(password);
-
-    const sql = "INSERT INTO users (email, password) VALUES (?, ?)";
-    const values = [email, hashedPassword];
-
-    const [rows] = await (await conn).execute(sql, values);
+    const { rows, conn } = await getSqlQueryResult(sql, values);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: "회원가입 완료" });
     } else {
       res.status(StatusCodes.BAD_REQUEST).send({ message: "회원가입 실패" });
     }
+
+    conn.release();
   } catch (err) {
-    handleError(res, err);
+    handleServerError(res, err);
   }
 };
 
 const loginUser = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    const sql = "SELECT * FROM users WHERE email = ?";
-    const [rows] = await (await conn).execute(sql, [email]);
+  const sql = "SELECT * FROM users WHERE email = ?";
+
+  try {
+    const { rows, conn } = await getSqlQueryResult(sql, [email]);
     const [loginUser] = rows;
 
     if (!loginUser) return res.status(StatusCodes.UNAUTHORIZED).send({ message: "일치하는 이메일이 없음" });
@@ -51,7 +52,7 @@ const loginUser = async (req, res, next) => {
 
     const token = jwt.sign({ email }, TOKEN_PRIVATE_KEY, {
       expiresIn: "1h",
-      issuer: "hyemin",
+      issuer: TOKEN_ISSUER,
     });
 
     res
@@ -62,43 +63,47 @@ const loginUser = async (req, res, next) => {
         secure: process.env.NODE_ENV === "production",
       })
       .send({ message: "로그인 성공" });
-    console.log(token);
+    conn.release();
   } catch (err) {
-    handleError(res, err);
+    handleServerError(res, err);
   }
 };
 
 const requestResetPassword = async (req, res, next) => {
-  try {
-    const { email } = req.body;
+  const { email } = req.body;
 
-    const sql = "SELECT * FROM users WHERE email = ?";
-    const [rows] = await (await conn).execute(sql, [email]);
+  const sql = "SELECT * FROM users WHERE email = ?";
+
+  try {
+    const { rows, conn } = await getSqlQueryResult(sql, [email]);
 
     if (!rows.length) return res.status(StatusCodes.UNAUTHORIZED).send({ message: "일치하는 회원 없음" });
 
     res.status(StatusCodes.OK).send({ email });
+    conn.release();
   } catch (err) {
-    handleError(res, err);
+    handleServerError(res, err);
   }
 };
 
 const resetPassword = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-    const hashedPassword = await hashPasswordSync(password);
+  const { email, password } = req.body;
+  const hashedPassword = hashPasswordSync(password);
 
-    const sql = "UPDATE users SET password = ? WHERE email = ?";
-    const values = [hashedPassword, email];
-    const [rows] = await (await conn).execute(sql, values);
+  const sql = "UPDATE users SET password = ? WHERE email = ?";
+  const values = [hashedPassword, email];
+
+  try {
+    const { rows, conn } = await getSqlQueryResult(sql, values);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: "비밀번호 초기화 성공" });
     } else {
-      res.status(StatusCodes.BAD_REQUEST).send({ message: "비밀번호 변경 실패" });
+      res.status(StatusCodes.UNPROCESSABLE_ENTITY).send({ message: "비밀번호 변경 실패" });
     }
+    conn.release();
   } catch (err) {
-    handleError(res, err);
+    handleServerError(res, err);
   }
 };
 
