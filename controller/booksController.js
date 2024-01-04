@@ -2,13 +2,32 @@ const { StatusCodes } = require("http-status-codes");
 const getSqlQueryResult = require("../utils/getSqlQueryResult");
 const handleServerError = require("../utils/handleServerError");
 
+// MySQL은 LIMIT 및 OFFSET 절에서 바인딩 매개변수를 지원하지 않습니다. 그래서 이러한 오류가 발생하는 것입니다. 따라서, 바인딩 매개변수 대신 직접 값을 쿼리에 삽입하는 방식으로 해결해야 합니다.
+
+// 하지만 직접 값을 쿼리에 삽입하는 경우 SQL 인젝션 공격에 취약해질 수 있으므로, 반드시 값을 검증하고 안전하게 변환해야 합니다.
+
+// 아래는 안전하게 LIMIT과 OFFSET 값을 쿼리에 삽입하는 방법입니다:
+// const limit = 6;
+// const offset = limit * (page - 1);
+
+// // 숫자로 변환하고, NaN이거나 음수인 경우 기본값으로 설정
+// const safeLimit = Number.isNaN(limit) || limit < 0 ? 10 : limit;
+// const safeOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset;
+
+// const sql = `
+//     SELECT * FROM books
+//     WHERE title LIKE CONCAT("%", ?, "%")
+//     LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+
+// const { rows, conn } = await getSqlQueryResult(sql, ['모던']);
+
 const getBooks = async (req, res) => {
   const { categoryId, new: fetchNewBooks, page } = req.query;
 
   const limit = 8;
   const offset = limit * (page - 1);
 
-  let sql = "SELECT * FROM books";
+  let sql = "SELECT * FROM books ";
   const values = [];
 
   if (categoryId) {
@@ -23,8 +42,7 @@ const getBooks = async (req, res) => {
   }
 
   if (page) {
-    sql += " LIMIT ? OFFSET ?";
-    values.push(limit, offset);
+    sql += `LIMIT ${limit} OFFSET ${offset}`;
   }
 
   try {
@@ -39,16 +57,12 @@ const getBooks = async (req, res) => {
 const getSearchBooks = async (req, res, next) => {
   const { page, query } = req.query;
 
-  let limit = null;
-  let offset = null;
   let additional = "";
-  let values = [query];
 
   if (page) {
-    limit = 6;
-    offset = limit * (page - 1);
-    additional = "LIMIT ? OFFSET ?";
-    values = [query, parseInt(limit, 10), parseInt(offset, 10)];
+    const limit = 6;
+    const offset = limit * (page - 1);
+    additional = ` LIMIT ${limit} OFFSET ${offset}`;
   }
 
   const sql = `
@@ -57,7 +71,7 @@ const getSearchBooks = async (req, res, next) => {
     ${additional}`;
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows, conn } = await getSqlQueryResult(sql, [query]);
     res.status(StatusCodes.OK).send({ lists: rows });
     conn.release();
   } catch (err) {
