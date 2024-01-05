@@ -1,14 +1,17 @@
 const { StatusCodes } = require("http-status-codes");
 const conn = require("../mysql");
 
+const getSqlQueryResult = require("../utils/getSqlQueryResult");
+const handleServerError = require("../utils/handleServerError");
+
 const getCategory = async (req, res, next) => {
+  const sql = "SELECT * FROM category";
   try {
-    const sql = "SELECT * FROM category";
-    const [rows] = await (await conn).execute(sql);
+    const { rows, conn } = await getSqlQueryResult(sql);
     res.status(StatusCodes.OK).send({ lists: rows });
+    conn.release();
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: "Internal Server Error" });
+    handleServerError(res, err);
   }
 };
 
