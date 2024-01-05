@@ -1,0 +1,16 @@
+{
+	"extends": ["prettier"],
+	"plugins": ["prettier"],
+	"rules": {
+		"prettier/prettier": ["error", { "endOfLine": "auto" }]
+	},
+
+	"env": {
+		"node": true,
+		"commonjs": true,
+		"es2021": true
+	},
+	"parserOptions": {
+		"ecmaVersion": 12
+	}
+}
