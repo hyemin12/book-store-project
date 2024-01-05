@@ -10,7 +10,7 @@
 
 ### 📘API
 
-[API 설계 내역](https://www.notion.so/Book-store-API-8b1ce7974b434410a75d880b065e65a0?pvs=4)
+[API 설계 내역](https://volcano-jackal-e15.notion.site/Book-store-API-8b1ce7974b434410a75d880b065e65a0?pvs=4)
 
 ### 📘실행 방법
 
