@@ -8,7 +8,7 @@ const handleServerError = require("../utils/handleServerError");
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
 const TOKEN_ISSUER = process.env.TOKEN_ISSUER;
 const saltRounds = process.env.SALT_ROUNDS || 10;
-
+console.log("saltRounds", saltRounds);
 // 비밀번호 해싱
 const hashPasswordSync = (password) => {
   return bcrypt.hashSync(password, saltRounds);

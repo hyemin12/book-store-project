@@ -4,7 +4,7 @@ const conn = require("../mysql");
 const getSqlQueryResult = require("../utils/getSqlQueryResult");
 const handleServerError = require("../utils/handleServerError");
 
-const getCategory = async (req, res, next) => {
+const getCategory = async (req, res) => {
   const sql = "SELECT * FROM category";
   try {
     const { rows, conn } = await getSqlQueryResult(sql);
