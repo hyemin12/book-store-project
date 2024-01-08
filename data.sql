@@ -4,3 +4,5 @@ SELECT EXISTS(SELECT * FROM bookstore.likes WHERE user_id = 2 AND book_id = 1) A
 
 
 INSERT INTO cartItems (book_id,quantity,user_id) VALUES (1,2,2)
+
+And id IN

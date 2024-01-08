@@ -24,12 +24,19 @@ const addToCart = async (req, res) => {
 };
 
 const getCartsItems = async (req, res) => {
-	const { user_id } = req.body;
-	const sql = `SELECT cartItems.id, book_id, title, summary, price, quantity FROM cartItems 
+	const { user_id, selected } = req.body;
+	let sql = `SELECT cartItems.id, book_id, title, summary, price, quantity FROM cartItems 
         LEFT JOIN books ON cartItems.book_id = books.id
         WHERE user_id = ? `;
+	const values = [user_id];
+
+	if (selected) {
+		sql += `AND cartItems.id IN (?${',?'.repeat(selected.length - 1)})`;
+		values.push(...selected);
+	}
+
 	try {
-		const { rows, conn } = await getSqlQueryResult(sql, [user_id]);
+		const { rows, conn } = await getSqlQueryResult(sql, values);
 		res.status(StatusCodes.OK).send({ lists: rows });
 
 		conn.release();
@@ -42,6 +49,7 @@ const deleteCartsItem = async (req, res) => {
 	const { id } = req.params;
 	const sql = `DELETE FROM cartItems
         WHERE id = ? `;
+
 	try {
 		const { rows, conn } = await getSqlQueryResult(sql, [id]);
 
