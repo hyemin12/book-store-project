@@ -40,12 +40,10 @@ const getCartsItems = async (req, res) => {
 
 const deleteCartsItem = async (req, res) => {
 	const { id } = req.params;
-	// const {user_id} = req.body
 	const sql = `DELETE FROM cartItems
-    WHERE id = ? `;
-	const values = [id];
+        WHERE id = ? `;
 	try {
-		const { rows, conn } = await getSqlQueryResult(sql, values);
+		const { rows, conn } = await getSqlQueryResult(sql, [id]);
 
 		if (rows.affectedRows > 0) {
 			res.status(StatusCodes.OK).send({ message: '아이템 삭제 성공' });
