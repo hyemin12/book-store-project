@@ -24,10 +24,12 @@ const addToCart = async (req, res) => {
 };
 
 const getCartsItems = async (req, res) => {
-	const sql = `SELECT * from cartItems 
+	const { user_id } = req.body;
+	const sql = `SELECT cartItems.id, book_id, title, summary, price, quantity FROM cartItems 
+        LEFT JOIN books ON cartItems.book_id = books.id
         WHERE user_id = ? `;
 	try {
-		const { rows, conn } = await getSqlQueryResult(sql);
+		const { rows, conn } = await getSqlQueryResult(sql, [user_id]);
 		res.status(StatusCodes.OK).send({ lists: rows });
 
 		conn.release();
