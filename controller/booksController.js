@@ -72,7 +72,6 @@ const getIndividualBook = async (req, res) => {
 	} catch (err) {
 		handleServerError(res, err);
 	}
-};
 
 const getSearchBooks = async (req, res, next) => {
 	const { page, query } = req.query;
