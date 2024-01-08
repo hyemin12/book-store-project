@@ -11,8 +11,11 @@ function buildBaseBookQuery(userId) {
   `;
 
 	if (userId) {
-		sql += `,
-      (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
+		sql = `
+		SELECT books.*,
+			(SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
+			(SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
+	  	FROM books
     `;
 	}
 
