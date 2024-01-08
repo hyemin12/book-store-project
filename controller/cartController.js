@@ -56,4 +56,31 @@ const deleteCartsItem = async (req, res) => {
 	}
 };
 
-module.exports = { addToCart, deleteCartsItem, getCartsItems };
+const updateCartItemCount = async (req, res) => {
+	const { id } = req.params;
+	const { quantity } = req.body;
+
+	const sql = `UPDATE cartItems SET quantity = ? 
+		WHERE id = ?`;
+	const values = [quantity, id];
+
+	try {
+		const { rows, conn } = await getSqlQueryResult(sql, values);
+
+		if (rows.affectedRows > 0) {
+			res.status(StatusCodes.OK).send({ message: '수량 변경 성공' });
+		} else {
+			res.status(StatusCodes.BAD_REQUEST).send({ message: '수량 변경 실패' });
+		}
+		conn.release();
+	} catch (err) {
+		handleServerError(res, err);
+	}
+};
+
+module.exports = {
+	addToCart,
+	deleteCartsItem,
+	getCartsItems,
+	updateCartItemCount
+};
