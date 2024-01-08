@@ -14,8 +14,6 @@ const postLike = async (req, res, next) => {
 		const { rows, conn } = await getSqlQueryResult(sql, values);
 		if (rows.affectedRows > 0) {
 			res.status(StatusCodes.CREATED).send({ message: '좋아요 추가 성공' });
-		} else {
-			res.status(StatusCodes.BAD_REQUEST).send({ message: '좋아요 추가 실패' });
 		}
 		conn.release();
 	} catch (err) {
@@ -36,8 +34,6 @@ const deleteLike = async (req, res, next) => {
 
 		if (rows.affectedRows > 0) {
 			res.status(StatusCodes.CREATED).send({ message: '좋아요 삭제 성공' });
-		} else {
-			res.status(StatusCodes.BAD_REQUEST).send({ message: '좋아요 삭제 실패' });
 		}
 		conn.release();
 	} catch (err) {

@@ -1,25 +1,28 @@
 {
-  "name": "book-store-api",
-  "version": "0.0.1",
-  "description": "프로그래머스 데브코스의 두번째 스프린트 프로젝트입니다.",
-  "author": "고혜민",
-  "dependencies": {
-    "bcrypt": "^5.1.1",
-    "cookie-parser": "^1.4.6",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "express-validator": "^7.0.1",
-    "http-status-codes": "^2.3.0",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.6.5"
-  },
-  "scripts": {
-    "start": "nodemon app.js"
-  },
-  "devDependencies": {
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.2",
-    "prettier": "^3.1.1"
-  }
+	"name": "book-store-api",
+	"version": "0.0.1",
+	"description": "프로그래머스 데브코스의 두번째 스프린트 프로젝트입니다.",
+	"author": "고혜민",
+	"dependencies": {
+		"bcrypt": "^5.1.1",
+		"cookie-parser": "^1.4.6",
+		"dotenv": "^16.3.1",
+		"express": "^4.18.2",
+		"express-validator": "^7.0.1",
+		"http-status-codes": "^2.3.0",
+		"jsonwebtoken": "^9.0.2",
+		"mysql2": "^3.6.5"
+	},
+	"scripts": {
+		"start": "nodemon app.js",
+		"lint": "eslint .",
+		"format": "prettier --write '**/*.{js}'",
+		"lint-format": "npm run lint && npm run format"
+	},
+	"devDependencies": {
+		"eslint": "^8.56.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-plugin-prettier": "^5.1.2",
+		"prettier": "^3.1.1"
+	}
 }

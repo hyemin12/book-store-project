@@ -12,10 +12,6 @@ const addToCart = async (req, res) => {
 
 		if (rows.affectedRows > 0) {
 			res.status(StatusCodes.CREATED).send({ message: '장바구니 추가 성공' });
-		} else {
-			res
-				.status(StatusCodes.BAD_REQUEST)
-				.send({ message: '장바구니 추가 실패' });
 		}
 		conn.release();
 	} catch (err) {
@@ -55,8 +51,6 @@ const deleteCartsItem = async (req, res) => {
 
 		if (rows.affectedRows > 0) {
 			res.status(StatusCodes.OK).send({ message: '아이템 삭제 성공' });
-		} else {
-			res.status(StatusCodes.BAD_REQUEST).send({ message: '아이템 삭제 실패' });
 		}
 		conn.release();
 	} catch (err) {
@@ -77,8 +71,6 @@ const updateCartItemCount = async (req, res) => {
 
 		if (rows.affectedRows > 0) {
 			res.status(StatusCodes.OK).send({ message: '수량 변경 성공' });
-		} else {
-			res.status(StatusCodes.BAD_REQUEST).send({ message: '수량 변경 실패' });
 		}
 		conn.release();
 	} catch (err) {
