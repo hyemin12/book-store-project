@@ -35,8 +35,6 @@ const joinUser = async (req, res, next) => {
 
 		if (rows.affectedRows > 0) {
 			res.status(StatusCodes.CREATED).send({ message: '회원가입 완료' });
-		} else {
-			res.status(StatusCodes.BAD_REQUEST).send({ message: '회원가입 실패' });
 		}
 
 		conn.release();
