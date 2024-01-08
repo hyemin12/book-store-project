@@ -1,3 +1,5 @@
+const { StatusCodes } = require('http-status-codes');
+
 const handleServerError = (res, error) => {
 	console.error(error);
 
@@ -46,3 +48,5 @@ const handleServerError = (res, error) => {
 				.send({ message: '내부 서버 오류' });
 	}
 };
+
+module.exports = handleServerError;
