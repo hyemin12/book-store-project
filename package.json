@@ -16,7 +16,7 @@
 	"scripts": {
 		"start": "nodemon app.js",
 		"lint": "eslint .",
-		"format": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+		"format": "prettier --write '**/*.{js}'",
 		"lint-format": "npm run lint && npm run format"
 	},
 	"devDependencies": {
