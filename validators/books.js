@@ -20,7 +20,8 @@ const validatePage = query('page')
 	.trim()
 	.notEmpty()
 	.isNumeric()
-	.withMessage('페이지는 숫자여야 합니다.')
+	.isInt({ min: 1 })
+	.withMessage('페이지는 1 이상의 숫자여야 합니다.')
 	.default(1);
 
 const validateQuery = query('query')
