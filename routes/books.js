@@ -1,13 +1,13 @@
 const express = require('express');
 const {
-	getBooks,
-	getSearchBooks,
-	getIndividualBook
+  getBooks,
+  getSearchBooks,
+  getIndividualBook
 } = require('../controller/booksController');
 const {
-	validatesGetBooks,
-	validatesSearchBooks,
-	validatesBook
+  validatesGetBooks,
+  validatesSearchBooks,
+  validatesBook
 } = require('../validators/books');
 
 const router = express.Router();

@@ -4,105 +4,105 @@ const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const handleServerError = require('../utils/handleServerError');
 
 function buildBaseBookQuery(userId) {
-	let sql = `
+  let sql = `
     SELECT books.*,
       (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
     FROM books
   `;
 
-	if (userId) {
-		sql = `
-		SELECT books.*,
-			(SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
-			(SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
-	  	FROM books
+  if (userId) {
+    sql = `
+    SELECT books.*,
+      (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
+      (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
+    FROM books
     `;
-	}
+  }
 
-	sql += ` LEFT JOIN category ON category.category_id = books.category_id `;
+  sql += ` LEFT JOIN category ON category.category_id = books.category_id `;
 
-	return sql;
+  return sql;
 }
 const getBooks = async (req, res) => {
-	const { categoryId, new: fetchNewBooks, page } = req.query;
-	const userId = req.body ? req.body.user_id : null;
-	const limit = 8;
-	const offset = limit * (page - 1);
+  const { categoryId, new: fetchNewBooks, page } = req.query;
+  const userId = req.body ? req.body.user_id : null;
+  const limit = 8;
+  const offset = limit * (page - 1);
 
-	let sql = buildBaseBookQuery(userId);
-	const values = userId ? [userId] : [];
+  let sql = buildBaseBookQuery(userId);
+  const values = userId ? [userId] : [];
 
-	if (categoryId) {
-		sql += ' WHERE books.category_id = ?';
-		values.push(categoryId);
-	}
+  if (categoryId) {
+    sql += ' WHERE books.category_id = ?';
+    values.push(categoryId);
+  }
 
-	if (fetchNewBooks) {
-		sql += categoryId ? ' AND' : ' WHERE';
-		sql += ' published_at BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()';
-	}
+  if (fetchNewBooks) {
+    sql += categoryId ? ' AND' : ' WHERE';
+    sql += ' published_at BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()';
+  }
 
-	if (page) {
-		sql += ` LIMIT ${limit} OFFSET ${offset}`;
-	}
+  if (page) {
+    sql += ` LIMIT ${limit} OFFSET ${offset}`;
+  }
 
-	try {
-		const { rows, conn } = await getSqlQueryResult(sql, values);
-		res.status(StatusCodes.OK).send({ lists: rows });
-		conn.release();
-	} catch (err) {
-		handleServerError(res, err);
-	}
+  try {
+    const { rows, conn } = await getSqlQueryResult(sql, values);
+    res.status(StatusCodes.OK).send({ lists: rows });
+    conn.release();
+  } catch (err) {
+    handleServerError(res, err);
+  }
 };
 
 const getIndividualBook = async (req, res) => {
-	const { bookId } = req.params;
-	const userId = req.body ? req.body.user_id : null;
+  const { bookId } = req.params;
+  const userId = req.body ? req.body.user_id : null;
 
-	let sql = buildBaseBookQuery(userId);
-	let values = [bookId];
+  let sql = buildBaseBookQuery(userId);
+  let values = [bookId];
 
-	if (userId) {
-		values.unshift(userId);
-	}
+  if (userId) {
+    values.unshift(userId);
+  }
 
-	sql += ' WHERE books.id = ?';
+  sql += ' WHERE books.id = ?';
 
-	try {
-		const { rows, conn } = await getSqlQueryResult(sql, values);
-		res.status(StatusCodes.OK).send(rows);
-		conn.release();
-	} catch (err) {
-		handleServerError(res, err);
-	}
+  try {
+    const { rows, conn } = await getSqlQueryResult(sql, values);
+    res.status(StatusCodes.OK).send(rows);
+    conn.release();
+  } catch (err) {
+    handleServerError(res, err);
+  }
 };
 const getSearchBooks = async (req, res, next) => {
-	const { page, query } = req.query;
+  const { page, query } = req.query;
 
-	let additional = '';
+  let additional = '';
 
-	if (page) {
-		const limit = 6;
-		const offset = limit * (page - 1);
-		additional = ` LIMIT ${limit} OFFSET ${offset}`;
-	}
+  if (page) {
+    const limit = 6;
+    const offset = limit * (page - 1);
+    additional = ` LIMIT ${limit} OFFSET ${offset}`;
+  }
 
-	const sql = `
+  const sql = `
     SELECT * FROM books 
     WHERE title LIKE CONCAT("%", ?, "%") 
     ${additional}`;
 
-	try {
-		const { rows, conn } = await getSqlQueryResult(sql, [query]);
-		res.status(StatusCodes.OK).send({ lists: rows });
-		conn.release();
-	} catch (err) {
-		handleServerError(res, err);
-	}
+  try {
+    const { rows, conn } = await getSqlQueryResult(sql, [query]);
+    res.status(StatusCodes.OK).send({ lists: rows });
+    conn.release();
+  } catch (err) {
+    handleServerError(res, err);
+  }
 };
 
 module.exports = {
-	getBooks,
-	getSearchBooks,
-	getIndividualBook
+  getBooks,
+  getSearchBooks,
+  getIndividualBook
 };
