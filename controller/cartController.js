@@ -21,12 +21,11 @@ const addToCart = async (req, res) => {
 
 const getCartsItems = async (req, res) => {
   const { user_id, selected } = req.body;
-  let sql = `
-			SELECT 
-			cartItems.id, book_id, title, summary, price, quantity 
-			FROM cartItems 
-			LEFT JOIN books ON cartItems.book_id = books.id
-			WHERE user_id = ?
+  let sql = `SELECT 
+    cartItems.id, book_id, title, summary, price, quantity 
+    FROM cartItems 
+    LEFT JOIN books ON cartItems.book_id = books.id
+    WHERE user_id = ?
 		`;
   const values = [user_id];
 

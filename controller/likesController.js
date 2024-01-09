@@ -25,8 +25,10 @@ const deleteLike = async (req, res, next) => {
   const { bookId } = req.params;
   const { user_id } = req.body;
 
-  const sql = `DELETE FROM likes
-        WHERE user_id = ? AND book_id = ?`;
+  const sql = `
+    DELETE FROM likes
+    WHERE user_id = ? AND book_id = ?
+  `;
   const values = [user_id, bookId];
 
   try {
