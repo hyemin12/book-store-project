@@ -5,10 +5,28 @@ const handleServerError = require('../utils/handleServerError');
 
 const addToCart = async (req, res) => {
   const { user_id, book_id, quantity } = req.body;
+
+  const sqlCheckDuplicate = `
+    SELECT * FROM cartItems 
+    WHERE user_id = ? AND book_id = ?
+  `;
+  const valuesCheckDuplicate = [user_id, book_id];
+
+  const { rows, conn } = await getSqlQueryResult(
+    sqlCheckDuplicate,
+    valuesCheckDuplicate
+  );
+  if (rows.length > 0) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .send({ message: '이미 추가되어 있는 상품입니다.' });
+  }
+
   const sql = 'INSERT INTO cartItems (book_id,quantity,user_id) VALUES (?,?,?)';
   const values = [book_id, quantity, user_id];
+
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '장바구니 추가 성공' });

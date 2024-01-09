@@ -7,11 +7,23 @@ const postLike = async (req, res, next) => {
   const { bookId } = req.params;
   const { user_id } = req.body;
 
-  const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
+  const sqlCheckDuplicate = `
+    SELECT * FROM likes 
+    WHERE user_id = ? AND book_id = ?
+  `;
   const values = [user_id, bookId];
 
+  const { rows, conn } = await getSqlQueryResult(sqlCheckDuplicate, values);
+
+  if (rows.length > 0) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .send({ message: '이미 좋아요를 추가한 책입니다.' });
+  }
+  const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
+
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values, conn);
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '좋아요 추가 성공' });
     }
@@ -26,8 +38,8 @@ const deleteLike = async (req, res, next) => {
   const { user_id } = req.body;
 
   const sql = `
-    DELETE FROM likes
-    WHERE user_id = ? AND book_id = ?
+  DELETE FROM likes
+  WHERE user_id = ? AND book_id = ?
   `;
   const values = [user_id, bookId];
 

@@ -1,7 +1,7 @@
 const mysql = require('../mysql');
 
 const getSqlQueryResult = async (sql, values, connection) => {
-  let conn;
+  let conn = connection;
   if (!connection) {
     conn = await mysql.getConnection();
   }

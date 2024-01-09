@@ -24,8 +24,8 @@ router
 
 router
   .route('/:id')
-  .delete(validateDeleteCartsItem, validateUpdateCartItemCount, deleteCartsItem)
-  .put(updateCartItemCount);
+  .delete(validateDeleteCartsItem, deleteCartsItem)
+  .put(validateUpdateCartItemCount, updateCartItemCount);
 
 router.route('/order').get(async (req, res, next) => {
   res.status(200).send({ message: '장바구니에서 선택한 상품 목록 조회' });

@@ -31,7 +31,8 @@ const postOrder = async (req, res, next) => {
     // Delivery 데이터 삽입
     const { rows: rowsDelivery } = await getSqlQueryResult(
       sqlDelivery,
-      valuesDelivery
+      valuesDelivery,
+      conn
     );
     const delivery_id = rowsDelivery.insertId;
 
@@ -52,7 +53,8 @@ const postOrder = async (req, res, next) => {
     // Orders 데이터 삽입
     const { rows: rowsOrders } = await getSqlQueryResult(
       sqlOrders,
-      valuesOrders
+      valuesOrders,
+      conn
     );
     const order_id = rowsOrders.insertId;
 
@@ -71,7 +73,8 @@ const postOrder = async (req, res, next) => {
     // Orderedbook 데이터 삽입
     const { rows: rowsOrderedBook } = await getSqlQueryResult(
       sqlOrderedBook,
-      valuesOrderedBook
+      valuesOrderedBook,
+      conn
     );
 
     const sqlDeleteCart = `
@@ -81,7 +84,8 @@ const postOrder = async (req, res, next) => {
     // CartItems 정보 삭제
     const { rows: rowsDeleteCart } = await getSqlQueryResult(
       sqlDeleteCart,
-      valuesDeleteCart
+      valuesDeleteCart,
+      conn
     );
 
     // Commit the transaction
@@ -89,7 +93,7 @@ const postOrder = async (req, res, next) => {
 
     res
       .status(StatusCodes.OK)
-      .send({ message: '결제 성공 및 장바구니 아이템 삭제', rowsDeleteCart });
+      .send({ message: '결제 성공 및 장바구니 아이템 삭제' });
   } catch (err) {
     await conn.rollback();
     handleServerError(res, err);

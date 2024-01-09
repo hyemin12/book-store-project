@@ -14,11 +14,6 @@ const handleServerError = (res, error) => {
         .status(StatusCodes.BAD_REQUEST)
         .send({ message: '존재하지 않는 테이블을 참조하였습니다.' });
       break;
-    case 'ER_DUP_ENTRY':
-      res
-        .status(StatusCodes.CONFLICT)
-        .send({ message: '이미 좋아요를 추가한 책입니다.' });
-      break;
     case 'ER_DATA_TOO_LONG':
       res
         .status(StatusCodes.BAD_REQUEST)
