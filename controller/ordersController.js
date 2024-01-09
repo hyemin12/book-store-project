@@ -19,7 +19,7 @@ const postOrder = async (req, res, next) => {
     INSERT INTO delivery 
     (recipient,address,contact) 
     VALUES (?,?,?)
-    `;
+  `;
 	const valuesDelivery = [
 		delivery.recipient,
 		delivery.address,
