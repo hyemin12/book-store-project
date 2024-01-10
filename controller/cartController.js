@@ -12,26 +12,30 @@ const addToCart = async (req, res) => {
   `;
   const valuesCheckDuplicate = [user_id, book_id];
 
-  const { rows, conn } = await getSqlQueryResult(
-    sqlCheckDuplicate,
-    valuesCheckDuplicate
-  );
-  if (rows.length > 0) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .send({ message: '이미 추가되어 있는 상품입니다.' });
-  }
-
-  const sql = 'INSERT INTO cartItems (book_id,quantity,user_id) VALUES (?,?,?)';
-  const values = [book_id, quantity, user_id];
-
   try {
+    const { rows: rowsDuplicate, conn } = await getSqlQueryResult(
+      sqlCheckDuplicate,
+      valuesCheckDuplicate,
+      undefined,
+      true
+    );
+    if (rowsDuplicate.length > 0) {
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .send({ message: '이미 추가되어 있는 상품입니다.' });
+      conn.release();
+      return;
+    }
+
+    const sql =
+      'INSERT INTO cartItems (book_id,quantity,user_id) VALUES (?,?,?)';
+    const values = [book_id, quantity, user_id];
+
     const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '장바구니 추가 성공' });
     }
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -39,6 +43,7 @@ const addToCart = async (req, res) => {
 
 const getCartsItems = async (req, res) => {
   const { user_id, selected } = req.body;
+
   let sql = `SELECT 
     cartItems.id, book_id, title, summary, price, quantity 
     FROM cartItems 
@@ -53,10 +58,8 @@ const getCartsItems = async (req, res) => {
   }
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
-
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -68,12 +71,11 @@ const deleteCartsItem = async (req, res) => {
         WHERE id = ? `;
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, [id]);
+    const { rows } = await getSqlQueryResult(sql, [id]);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '아이템 삭제 성공' });
     }
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -88,12 +90,11 @@ const updateCartItemCount = async (req, res) => {
   const values = [quantity, id];
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '수량 변경 성공' });
     }
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
