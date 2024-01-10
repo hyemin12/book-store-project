@@ -21,8 +21,7 @@ const validateLimit = query('limit')
   .notEmpty()
   .isNumeric()
   .isInt({ min: 1 })
-  .withMessage('limit은 1 이상의 숫자여야 합니다.')
-  .default(8);
+  .withMessage('limit은 1 이상의 숫자여야 합니다.');
 
 const validatePage = query('page')
   .optional()
@@ -30,8 +29,7 @@ const validatePage = query('page')
   .notEmpty()
   .isNumeric()
   .isInt({ min: 1 })
-  .withMessage('페이지는 1 이상의 숫자여야 합니다.')
-  .default(1);
+  .withMessage('페이지는 1 이상의 숫자여야 합니다.');
 
 const validateQuery = query('query')
   .trim()

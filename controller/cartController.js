@@ -3,6 +3,7 @@ const { StatusCodes } = require('http-status-codes');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const handleServerError = require('../utils/handleServerError');
 
+/** 장바구니에 아이템 추가 */
 const addToCart = async (req, res) => {
   const { user_id, book_id, quantity } = req.body;
 
@@ -39,6 +40,9 @@ const addToCart = async (req, res) => {
   }
 };
 
+/** 장바구니의 아이템 조회
+ * selected: 선택된 아이템의 목록
+ */
 const getCartsItems = async (req, res) => {
   const { user_id, selected } = req.body;
 
@@ -63,6 +67,7 @@ const getCartsItems = async (req, res) => {
   }
 };
 
+/** 장바구니의 아이템 삭제 */
 const deleteCartsItem = async (req, res) => {
   const { id } = req.params;
   const sql = `DELETE FROM cartItems
@@ -79,6 +84,7 @@ const deleteCartsItem = async (req, res) => {
   }
 };
 
+/** 장바구니의 아이템 수량 변경 */
 const updateCartItemCount = async (req, res) => {
   const { id } = req.params;
   const { quantity } = req.body;

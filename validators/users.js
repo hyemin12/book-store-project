@@ -11,13 +11,13 @@ const validateEmail = body('email')
   .withMessage('이메일 형식이 올바르지 않음')
   .custom(async (email) => {
     const sql = 'SELECT * FROM users WHERE email = ?';
-    const { conn, rows } = await getSqlQueryResult(sql, [email]);
+    const { rows } = await getSqlQueryResult(sql, [email]);
 
     if (!rows.length) {
-      throw new Error('일치하는 이메일이 없음');
+      const notMatchError = new Error('일치하는 이메일이 없음');
+      notMatchError.status = StatusCodes.UNAUTHORIZED;
+      throw notMatchError;
     }
-
-    conn.release();
 
     return true;
   });
@@ -30,12 +30,13 @@ const validateEmailForJoin = body('email')
   .withMessage('이메일 형식이 올바르지 않음')
   .custom(async (email) => {
     const sql = 'SELECT * FROM users WHERE email = ?';
-    const { conn, rows } = await getSqlQueryResult(sql, [email]);
+    const { rows } = await getSqlQueryResult(sql, [email]);
 
     if (rows.length > 0) {
-      throw new Error('이미 등록된 이메일입니다.');
+      const existingEmailError = new Error('이미 등록된 이메일입니다.');
+      existingEmailError.status = StatusCodes.NOT_FOUND;
+      throw existingEmailError;
     }
-    conn.release();
 
     return true;
   });

@@ -4,6 +4,7 @@ const mysql = require('../mysql');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const handleServerError = require('../utils/handleServerError');
 
+/** 주문 하기 (결제 하기) */
 const postOrder = async (req, res, next) => {
   const {
     lists,
@@ -15,6 +16,7 @@ const postOrder = async (req, res, next) => {
     FirstBookTitle
   } = req.body;
 
+  // delivery table sql문
   const sqlDelivery = `
     INSERT INTO delivery 
     (recipient,address,contact) 
@@ -38,6 +40,7 @@ const postOrder = async (req, res, next) => {
     );
     const delivery_id = rowsDelivery.insertId;
 
+    // orders table sql문
     const sqlOrders = `
       INSERT INTO orders 
       (book_title, total_quantity, total_price, payment, delivery_id, user_id) 
@@ -61,6 +64,7 @@ const postOrder = async (req, res, next) => {
     );
     const order_id = rowsOrders.insertId;
 
+    // orderedbook table sql문
     const sqlOrderedBook = `
       INSERT INTO orderedbook 
       (order_id,book_id,quantity) 
@@ -81,6 +85,7 @@ const postOrder = async (req, res, next) => {
       true
     );
 
+    // 장바구니 내역 삭제 sql문
     const sqlDeleteCart = `
       DELETE FROM cartItems
       WHERE id IN (?${',?'.repeat(lists.length - 1)})
@@ -107,6 +112,7 @@ const postOrder = async (req, res, next) => {
   }
 };
 
+/** 주문 내역 조회 */
 const getOrders = async (req, res, next) => {
   const sql = `
   SELECT * FROM orders 
@@ -120,6 +126,7 @@ const getOrders = async (req, res, next) => {
   }
 };
 
+/** 주문 내역 상세 조회 */
 const getOrderDetail = async (req, res, next) => {
   const { orderId } = req.params;
   res.status(StatusCodes.OK).send({ message: '상세 내역 조회' });
