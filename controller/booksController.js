@@ -23,9 +23,11 @@ function buildBaseBookQuery(userId) {
 
   return sql;
 }
+
 const getBooks = async (req, res) => {
   const { categoryId, new: fetchNewBooks, page } = req.query;
   const userId = req.body ? req.body.user_id : null;
+
   const limit = 8;
   const offset = limit * (page - 1);
 
@@ -47,9 +49,8 @@ const getBooks = async (req, res) => {
   }
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -69,9 +70,8 @@ const getIndividualBook = async (req, res) => {
   sql += ' WHERE books.id = ?';
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send(rows);
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -93,9 +93,8 @@ const getSearchBooks = async (req, res, next) => {
     ${additional}`;
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, [query]);
+    const { rows } = await getSqlQueryResult(sql, [query]);
     res.status(StatusCodes.OK).send({ lists: rows });
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }

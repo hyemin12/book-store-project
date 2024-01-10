@@ -27,19 +27,21 @@ const postOrder = async (req, res, next) => {
   ];
 
   let conn = await mysql.getConnection();
+
   try {
     // Delivery 데이터 삽입
     const { rows: rowsDelivery } = await getSqlQueryResult(
       sqlDelivery,
       valuesDelivery,
-      conn
+      conn,
+      true
     );
     const delivery_id = rowsDelivery.insertId;
 
     const sqlOrders = `
       INSERT INTO orders 
-      (book_title,total_quantity,total_price,payment,delivery_id,user_id) 
-      VALUES(?,?,?,?,?,?)
+      (book_title, total_quantity, total_price, payment, delivery_id, user_id) 
+      VALUES (?,?,?,?,?,?)
     `;
     const valuesOrders = [
       FirstBookTitle,
@@ -54,7 +56,8 @@ const postOrder = async (req, res, next) => {
     const { rows: rowsOrders } = await getSqlQueryResult(
       sqlOrders,
       valuesOrders,
-      conn
+      conn,
+      true
     );
     const order_id = rowsOrders.insertId;
 
@@ -74,7 +77,8 @@ const postOrder = async (req, res, next) => {
     const { rows: rowsOrderedBook } = await getSqlQueryResult(
       sqlOrderedBook,
       valuesOrderedBook,
-      conn
+      conn,
+      true
     );
 
     const sqlDeleteCart = `
@@ -85,7 +89,8 @@ const postOrder = async (req, res, next) => {
     const { rows: rowsDeleteCart } = await getSqlQueryResult(
       sqlDeleteCart,
       valuesDeleteCart,
-      conn
+      conn,
+      true
     );
 
     // Commit the transaction
@@ -103,7 +108,16 @@ const postOrder = async (req, res, next) => {
 };
 
 const getOrders = async (req, res, next) => {
-  res.status(StatusCodes.OK).send({ message: '주문 내역 조회' });
+  const sql = `
+  SELECT * FROM orders 
+  LEFT JOIN delivery ON delivery.id = orders.delivery_id
+  `;
+  try {
+    const { rows } = await getSqlQueryResult(sql);
+    res.status(StatusCodes.OK).send({ lists: rows });
+  } catch (error) {
+    handleServerError(res, err);
+  }
 };
 
 const getOrderDetail = async (req, res, next) => {

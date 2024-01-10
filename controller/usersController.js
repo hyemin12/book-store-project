@@ -31,13 +31,11 @@ const joinUser = async (req, res, next) => {
   const values = [email, hashedPassword];
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '회원가입 완료' });
     }
-
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -49,7 +47,7 @@ const loginUser = async (req, res, next) => {
   const sql = 'SELECT * FROM users WHERE email = ?';
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, [email]);
+    const { rows } = await getSqlQueryResult(sql, [email]);
     const [loginUser] = rows;
 
     if (!loginUser)
@@ -79,7 +77,6 @@ const loginUser = async (req, res, next) => {
         secure: process.env.NODE_ENV === 'production'
       })
       .send({ message: '로그인 성공' });
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -91,12 +88,11 @@ const requestResetPassword = async (req, res, next) => {
   const sql = 'SELECT * FROM users WHERE email = ?';
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, [email]);
+    const { rows } = await getSqlQueryResult(sql, [email]);
 
     const [user] = rows;
 
     res.status(StatusCodes.OK).send({ email: user.email });
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
@@ -110,7 +106,7 @@ const resetPassword = async (req, res, next) => {
   const values = [hashedPassword, email];
 
   try {
-    const { rows, conn } = await getSqlQueryResult(sql, values);
+    const { rows } = await getSqlQueryResult(sql, values);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '비밀번호 초기화 성공' });
@@ -119,7 +115,6 @@ const resetPassword = async (req, res, next) => {
         .status(StatusCodes.UNPROCESSABLE_ENTITY)
         .send({ message: '비밀번호 변경 실패' });
     }
-    conn.release();
   } catch (err) {
     handleServerError(res, err);
   }
