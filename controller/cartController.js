@@ -20,11 +20,9 @@ const addToCart = async (req, res) => {
       true
     );
     if (rowsDuplicate.length > 0) {
-      res
-        .status(StatusCodes.BAD_REQUEST)
-        .send({ message: '이미 추가되어 있는 상품입니다.' });
-      conn.release();
-      return;
+      const duplicateError = new Error('이미 추가되어 있는 상품입니다.');
+      duplicateError.status = StatusCodes.CONFLICT;
+      throw duplicateError;
     }
 
     const sql =

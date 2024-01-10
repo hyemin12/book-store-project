@@ -22,11 +22,9 @@ const postLike = async (req, res, next) => {
     );
 
     if (rowsDuplicate.length > 0) {
-      res
-        .status(StatusCodes.BAD_REQUEST)
-        .send({ message: '이미 좋아요를 추가한 책입니다.' });
-      conn.release();
-      return;
+      const duplicateError = new Error('이미 좋아요를 추가한 책입니다.');
+      duplicateError.status = StatusCodes.CONFLICT;
+      throw duplicateError;
     }
 
     const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
