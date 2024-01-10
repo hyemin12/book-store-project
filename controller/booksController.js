@@ -25,10 +25,15 @@ function buildBaseBookQuery(userId) {
 }
 
 const getBooks = async (req, res) => {
-  const { categoryId, new: fetchNewBooks, page } = req.query;
+  const {
+    categoryId,
+    new: fetchNewBooks,
+    page,
+    limit: userInputLimit
+  } = req.query;
   const userId = req.body ? req.body.user_id : null;
 
-  const limit = 8;
+  const limit = userInputLimit || 8;
   const offset = limit * (page - 1);
 
   let sql = buildBaseBookQuery(userId);
@@ -77,12 +82,12 @@ const getIndividualBook = async (req, res) => {
   }
 };
 const getSearchBooks = async (req, res, next) => {
-  const { page, query } = req.query;
+  const { page, limit: userInputLimit, query } = req.query;
 
   let additional = '';
 
   if (page) {
-    const limit = 6;
+    const limit = userInputLimit || 6;
     const offset = limit * (page - 1);
     additional = ` LIMIT ${limit} OFFSET ${offset}`;
   }

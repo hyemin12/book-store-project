@@ -15,6 +15,15 @@ const validateNew = query('new')
   .withMessage('new는 boolean 타입이어야 함')
   .default(false);
 
+const validateLimit = query('limit')
+  .optional()
+  .trim()
+  .notEmpty()
+  .isNumeric()
+  .isInt({ min: 1 })
+  .withMessage('limit은 1 이상의 숫자여야 합니다.')
+  .default(8);
+
 const validatePage = query('page')
   .optional()
   .trim()
@@ -35,10 +44,16 @@ const validateBookId = param('bookId').trim().notEmpty();
 const validatesGetBooks = [
   validateCategoryId.optional(),
   validateNew.optional(),
+  validateLimit.optional(),
   validatePage.optional(),
   validateAndProceed
 ];
-const validatesSearchBooks = [validateQuery, validatePage, validateAndProceed];
+const validatesSearchBooks = [
+  validateQuery,
+  validatePage.optional(),
+  validateLimit.optional(),
+  validateAndProceed
+];
 const validatesBook = [validateBookId, validateAndProceed];
 
 module.exports = { validatesGetBooks, validatesSearchBooks, validatesBook };
