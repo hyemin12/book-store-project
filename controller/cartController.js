@@ -3,6 +3,7 @@ const { StatusCodes } = require('http-status-codes');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const handleServerError = require('../utils/handleServerError');
 
+/** 장바구니에 아이템 추가 */
 const addToCart = async (req, res) => {
   const { user_id, book_id, quantity } = req.body;
 
@@ -20,11 +21,9 @@ const addToCart = async (req, res) => {
       true
     );
     if (rowsDuplicate.length > 0) {
-      res
-        .status(StatusCodes.BAD_REQUEST)
-        .send({ message: '이미 추가되어 있는 상품입니다.' });
-      conn.release();
-      return;
+      const duplicateError = new Error('이미 추가되어 있는 상품입니다.');
+      duplicateError.status = StatusCodes.CONFLICT;
+      throw duplicateError;
     }
 
     const sql =
@@ -41,6 +40,9 @@ const addToCart = async (req, res) => {
   }
 };
 
+/** 장바구니의 아이템 조회
+ * selected: 선택된 아이템의 목록
+ */
 const getCartsItems = async (req, res) => {
   const { user_id, selected } = req.body;
 
@@ -65,6 +67,7 @@ const getCartsItems = async (req, res) => {
   }
 };
 
+/** 장바구니의 아이템 삭제 */
 const deleteCartsItem = async (req, res) => {
   const { id } = req.params;
   const sql = `DELETE FROM cartItems
@@ -81,6 +84,7 @@ const deleteCartsItem = async (req, res) => {
   }
 };
 
+/** 장바구니의 아이템 수량 변경 */
 const updateCartItemCount = async (req, res) => {
   const { id } = req.params;
   const { quantity } = req.body;

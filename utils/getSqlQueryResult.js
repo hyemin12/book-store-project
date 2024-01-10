@@ -3,7 +3,7 @@ const mysql = require('../mysql');
 /** sql문을 실행하고, 결과값을 받는 함수
  * sql: 실행할 sql문
  * values: 바인딩할 파라미터
- * connection: 연결되어 있는 DB
+ * connection: DB 연결 여부
  * keepConnection: 연결 종료 여부(여러 개의 sql문을 실행할 때는 true값을 전달해야 함)
  */
 const getSqlQueryResult = async (
@@ -12,13 +12,8 @@ const getSqlQueryResult = async (
   connection = undefined,
   keepConnection = false
 ) => {
-  let conn = connection;
-
+  const conn = connection ?? (await mysql.getConnection());
   try {
-    if (!connection) {
-      conn = await mysql.getConnection();
-    }
-
     const [rows] = await conn.execute(sql, values);
     return { conn, rows };
   } catch (err) {

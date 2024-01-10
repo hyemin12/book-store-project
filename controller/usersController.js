@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const handleServerError = require('../utils/handleServerError');
 
+// env
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
 const TOKEN_ISSUER = process.env.TOKEN_ISSUER;
 const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
@@ -16,13 +17,13 @@ if (!TOKEN_PRIVATE_KEY || !TOKEN_ISSUER) {
 // 비밀번호 해싱
 const hashPassword = async (password) => {
   try {
-    const salt = await bcrypt.genSalt(saltRounds);
-    return await bcrypt.hash(password, salt);
+    return await bcrypt.hash(password, saltRounds);
   } catch (error) {
     throw new Error('비밀번호 해싱 중 에러 발생');
   }
 };
 
+/** 회원가입 */
 const joinUser = async (req, res, next) => {
   const { email, password } = req.body;
   const hashedPassword = await hashPassword(password);
@@ -41,6 +42,7 @@ const joinUser = async (req, res, next) => {
   }
 };
 
+/** 로그인 */
 const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -50,20 +52,19 @@ const loginUser = async (req, res, next) => {
     const { rows } = await getSqlQueryResult(sql, [email]);
     const [loginUser] = rows;
 
-    if (!loginUser)
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .send({ message: '일치하는 이메일이 없음' });
-
+    // 비밀번호 검증
     const matchPassword = await bcrypt.compareSync(
       password,
       loginUser.password
     );
-    if (!matchPassword)
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .send({ message: '비밀번호 불일치' });
 
+    if (!matchPassword) {
+      const notMatchError = new Error('비밀번호 불일치');
+      notMatchError.status = StatusCodes.UNAUTHORIZED;
+      throw notMatchError;
+    }
+
+    // 토큰 생성
     const token = jwt.sign({ email }, TOKEN_PRIVATE_KEY, {
       expiresIn: '1h',
       issuer: TOKEN_ISSUER
@@ -82,6 +83,7 @@ const loginUser = async (req, res, next) => {
   }
 };
 
+/** 비밀번호 초기화 요청 */
 const requestResetPassword = async (req, res, next) => {
   const { email } = req.body;
 
@@ -90,14 +92,13 @@ const requestResetPassword = async (req, res, next) => {
   try {
     const { rows } = await getSqlQueryResult(sql, [email]);
 
-    const [user] = rows;
-
-    res.status(StatusCodes.OK).send({ email: user.email });
+    res.status(StatusCodes.OK).send({ email: rows[0].email });
   } catch (err) {
     handleServerError(res, err);
   }
 };
 
+/** 비밀번호 초기화 */
 const resetPassword = async (req, res, next) => {
   const { email, password } = req.body;
   const hashedPassword = await hashPassword(password);
