@@ -1,42 +1,62 @@
 const { StatusCodes } = require('http-status-codes');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleServerError = require('../utils/handleServerError');
+const handleError = require('../utils/handleError');
+const checkExist = require('../utils/checkExist');
+const throwError = require('../utils/throwError');
 
-/** 장바구니에 아이템 추가 */
+/** 장바구니 아이템 수량 변경 */
+const updateCartItemQuantity = async (itemId, newQuantity, conn) => {
+  const sql = 'UPDATE cartItems SET quantity = ? WHERE id = ?';
+  const values = [newQuantity, itemId];
+  return await getSqlQueryResult(sql, values, conn);
+};
+
+/** 장바구니에 아이템 추가
+ * 이미 장바구니에 존재하는 아이템이라면 수량을 1 증가시킴
+ */
 const addToCart = async (req, res) => {
   const { user_id, book_id, quantity } = req.body;
 
-  const sqlCheckDuplicate = `
+  const checkExistItemSql = `
     SELECT * FROM cartItems 
     WHERE user_id = ? AND book_id = ?
   `;
-  const valuesCheckDuplicate = [user_id, book_id];
 
   try {
-    const { rows: rowsDuplicate, conn } = await getSqlQueryResult(
-      sqlCheckDuplicate,
-      valuesCheckDuplicate,
-      undefined,
-      true
-    );
-    if (rowsDuplicate.length > 0) {
-      const duplicateError = new Error('이미 추가되어 있는 상품입니다.');
-      duplicateError.status = StatusCodes.CONFLICT;
-      throw duplicateError;
+    const {
+      rows: rowsExist,
+      isExist,
+      conn
+    } = await checkExist(checkExistItemSql, [user_id, book_id]);
+
+    // 존재하는 경우 장바구니에 있는 수량 1 더하기
+    if (isExist) {
+      const { id, quantity } = rowsExist[0];
+      const addQuantity = quantity + 1;
+      const updateResult = await updateCartItemQuantity(id, addQuantity, conn);
+
+      if (updateResult.rows.affectedRows > 0) {
+        return res
+          .status(StatusCodes.OK)
+          .send({ message: `이미 존재하는 아이템! ${addQuantity}` });
+      } else {
+        throwError(ERROR_UNPROCESSABLE_ENTITY);
+      }
     }
 
     const sql =
       'INSERT INTO cartItems (book_id,quantity,user_id) VALUES (?,?,?)';
     const values = [book_id, quantity, user_id];
-
     const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
-      res.status(StatusCodes.CREATED).send({ message: '장바구니 추가 성공' });
+      res.status(StatusCodes.OK).send({ message: '장바구니에 추가완료 ' });
+    } else {
+      throwError('ER_UNPROCESSABLE_ENTITY');
     }
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -63,7 +83,7 @@ const getCartsItems = async (req, res) => {
     const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -80,7 +100,7 @@ const deleteCartsItem = async (req, res) => {
       res.status(StatusCodes.OK).send({ message: '아이템 삭제 성공' });
     }
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -89,18 +109,13 @@ const updateCartItemCount = async (req, res) => {
   const { id } = req.params;
   const { quantity } = req.body;
 
-  const sql = `UPDATE cartItems SET quantity = ? 
-		WHERE id = ?`;
-  const values = [quantity, id];
-
   try {
-    const { rows } = await getSqlQueryResult(sql, values);
-
-    if (rows.affectedRows > 0) {
+    const updateResult = await updateCartItemQuantity(id, quantity, undefined);
+    if (updateResult.rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '수량 변경 성공' });
     }
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 

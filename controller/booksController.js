@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleServerError = require('../utils/handleServerError');
+const handleError = require('../utils/handleError');
 
 /** books의 기본 쿼리를 리턴하는 함수
  *  userId가 있으면 유저가 좋아요를 클릭했는지 여부를 확인하고 반환
@@ -66,7 +66,7 @@ const getBooks = async (req, res) => {
     const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -88,7 +88,7 @@ const getIndividualBook = async (req, res) => {
     const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send(rows);
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -108,7 +108,7 @@ const getSearchBooks = async (req, res, next) => {
     const { rows } = await getSqlQueryResult(sql, [query]);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 

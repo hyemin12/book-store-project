@@ -1,42 +1,41 @@
 const { StatusCodes } = require('http-status-codes');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleServerError = require('../utils/handleServerError');
+const handleError = require('../utils/handleError');
+const throwError = require('../utils/throwError');
+const checkExist = require('../utils/checkExist');
+
+/** 좋아요 존재 여부 확인 */
+const checkLikeExist = async (values) => {
+  const sql = 'SELECT * FROM likes  WHERE user_id = ? AND book_id = ?';
+  return checkExist(sql, values);
+};
 
 /** 좋아요 추가 */
 const postLike = async (req, res, next) => {
   const { bookId } = req.params;
   const { user_id } = req.body;
 
-  const sqlCheckDuplicate = `
-    SELECT * FROM likes 
-    WHERE user_id = ? AND book_id = ?
-  `;
+  const insertLikeSql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
   const values = [user_id, bookId];
 
   try {
     // 좋아요 존재 여부 확인
-    const { rows: rowsDuplicate, conn } = await getSqlQueryResult(
-      sqlCheckDuplicate,
-      values,
-      undefined,
-      true
-    );
+    const { isExist, conn } = await checkLikeExist(values);
 
-    if (rowsDuplicate.length > 0) {
-      const duplicateError = new Error('이미 좋아요를 추가한 책입니다.');
-      duplicateError.status = StatusCodes.CONFLICT;
-      throw duplicateError;
+    if (isExist) {
+      throwError('ER_ALREADY_EXISTS_LIKE');
     }
 
-    const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
+    const { rows } = await getSqlQueryResult(insertLikeSql, values, conn);
 
-    const { rows } = await getSqlQueryResult(sql, values, conn);
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '좋아요 추가 성공' });
+    } else {
+      throwError('ER_UNPROCESSABLE_ENTITY');
     }
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -52,13 +51,21 @@ const deleteLike = async (req, res, next) => {
   const values = [user_id, bookId];
 
   try {
-    const { rows } = await getSqlQueryResult(sql, values);
+    const { isExist, conn } = await checkLikeExist(values);
+
+    if (!isExist) {
+      throwError('ER_NOT_FOUND');
+    }
+
+    const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '좋아요 삭제 성공' });
+    } else {
+      throwError('ER_UNPROCESSABLE_ENTITY');
     }
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 

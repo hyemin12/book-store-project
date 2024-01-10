@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleServerError = require('../utils/handleServerError');
+const handleError = require('../utils/handleError');
 
 const getCategory = async (req, res) => {
   const sql = 'SELECT * FROM category';
@@ -9,7 +9,7 @@ const getCategory = async (req, res) => {
     const { rows } = await getSqlQueryResult(sql);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
