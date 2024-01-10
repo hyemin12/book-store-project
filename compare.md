@@ -9,10 +9,10 @@
 
 ```js
 // 가독성을 위해 sql문 전체 작성
-const { StatusCodes } = require("http-status-codes");
+const { StatusCodes } = require('http-status-codes');
 
-const getSqlQueryResult = require("../utils/getSqlQueryResult");
-const handleServerError = require("../utils/handleServerError");
+const getSqlQueryResult = require('../utils/getSqlQueryResult');
+const handleError = require('../utils/handleError');
 
 const getBooks = async (req, res) => {
   const { categoryId, new: fetchNewBooks, page } = req.query;
@@ -35,14 +35,16 @@ const getBooks = async (req, res) => {
   }
 
   if (categoryId) {
-    sql += " WHERE books.category_id  = ?";
+    sql += ' WHERE books.category_id  = ?';
     values.push(categoryId);
 
     if (fetchNewBooks) {
-      sql += " AND published_at BETWEEN DATE_SUB(now(), interval 30 DAY) AND NOW()";
+      sql +=
+        ' AND published_at BETWEEN DATE_SUB(now(), interval 30 DAY) AND NOW()';
     }
   } else if (fetchNewBooks) {
-    sql += " WHERE published_at BETWEEN DATE_SUB(now(), interval 30 DAY) AND NOW()";
+    sql +=
+      ' WHERE published_at BETWEEN DATE_SUB(now(), interval 30 DAY) AND NOW()';
   }
 
   if (page) {
@@ -54,14 +56,14 @@ const getBooks = async (req, res) => {
     res.status(StatusCodes.OK).send({ lists: rows });
     conn.release();
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
 const getSearchBooks = async (req, res, next) => {
   const { page, query } = req.query;
 
-  let additional = "";
+  let additional = '';
 
   if (page) {
     const limit = 6;
@@ -79,7 +81,7 @@ const getSearchBooks = async (req, res, next) => {
     res.status(StatusCodes.OK).send({ lists: rows });
     conn.release();
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -109,14 +111,14 @@ const getIndividualBook = async (req, res, next) => {
     res.status(StatusCodes.OK).send(rows);
     conn.release();
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
 module.exports = {
   getBooks,
   getSearchBooks,
-  getIndividualBook,
+  getIndividualBook
 };
 ```
 
@@ -149,17 +151,17 @@ const getBooks = async (req, res) => {
   const values = userId ? [userId] : [];
 
   if (categoryId) {
-    sql += " WHERE category_id = ?";
+    sql += ' WHERE category_id = ?';
     values.push(categoryId);
   }
 
   if (fetchNewBooks) {
-    sql += categoryId ? " AND" : " WHERE";
-    sql += " published_at BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()";
+    sql += categoryId ? ' AND' : ' WHERE';
+    sql += ' published_at BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()';
   }
 
   if (page) {
-    sql += " LIMIT ? OFFSET ?";
+    sql += ' LIMIT ? OFFSET ?';
     values.push(limit, offset);
   }
 
@@ -168,7 +170,7 @@ const getBooks = async (req, res) => {
     res.status(StatusCodes.OK).send({ lists: rows });
     conn.release();
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
@@ -183,14 +185,14 @@ const getIndividualBook = async (req, res) => {
     values.unshift(userId);
   }
 
-  sql += " WHERE books.id = ?";
+  sql += ' WHERE books.id = ?';
 
   try {
     const { rows, conn } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send(rows);
     conn.release();
   } catch (err) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 ```

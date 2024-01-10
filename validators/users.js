@@ -1,6 +1,7 @@
 const { body } = require('express-validator');
-const validateAndProceed = require('./validateAndProceed');
+const { StatusCodes } = require('http-status-codes');
 
+const validateAndProceed = require('./validateAndProceed');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 
 const validateEmail = body('email')
@@ -8,38 +9,14 @@ const validateEmail = body('email')
   .notEmpty()
   .withMessage('이메일은 필수 입력')
   .isEmail()
-  .withMessage('이메일 형식이 올바르지 않음')
-  .custom(async (email) => {
-    const sql = 'SELECT * FROM users WHERE email = ?';
-    const { rows } = await getSqlQueryResult(sql, [email]);
-
-    if (!rows.length) {
-      const notMatchError = new Error('일치하는 이메일이 없음');
-      notMatchError.status = StatusCodes.UNAUTHORIZED;
-      throw notMatchError;
-    }
-
-    return true;
-  });
+  .withMessage('이메일 형식이 올바르지 않음');
 
 const validateEmailForJoin = body('email')
   .trim()
   .notEmpty()
   .withMessage('이메일은 필수 입력')
   .isEmail()
-  .withMessage('이메일 형식이 올바르지 않음')
-  .custom(async (email) => {
-    const sql = 'SELECT * FROM users WHERE email = ?';
-    const { rows } = await getSqlQueryResult(sql, [email]);
-
-    if (rows.length > 0) {
-      const existingEmailError = new Error('이미 등록된 이메일입니다.');
-      existingEmailError.status = StatusCodes.NOT_FOUND;
-      throw existingEmailError;
-    }
-
-    return true;
-  });
+  .withMessage('이메일 형식이 올바르지 않음');
 
 const validatePassword = body('password')
   .trim()

@@ -2,7 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 const mysql = require('../mysql');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleServerError = require('../utils/handleServerError');
+const handleError = require('../utils/handleError');
 
 /** 주문 하기 (결제 하기) */
 const postOrder = async (req, res, next) => {
@@ -28,7 +28,7 @@ const postOrder = async (req, res, next) => {
     delivery.contact
   ];
 
-  let conn = await mysql.getConnection();
+  const conn = await mysql.getConnection();
 
   try {
     // Delivery 데이터 삽입
@@ -106,7 +106,7 @@ const postOrder = async (req, res, next) => {
       .send({ message: '결제 성공 및 장바구니 아이템 삭제' });
   } catch (err) {
     await conn.rollback();
-    handleServerError(res, err);
+    handleError(res, err);
   } finally {
     conn.release();
   }
@@ -122,7 +122,7 @@ const getOrders = async (req, res, next) => {
     const { rows } = await getSqlQueryResult(sql);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (error) {
-    handleServerError(res, err);
+    handleError(res, err);
   }
 };
 
