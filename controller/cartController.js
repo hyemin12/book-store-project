@@ -90,14 +90,15 @@ const getCartsItems = async (req, res) => {
 /** 장바구니의 아이템 삭제 */
 const deleteCartsItem = async (req, res) => {
   const { id } = req.params;
-  const sql = `DELETE FROM cartItems
-        WHERE id = ? `;
+  const sql = 'DELETE FROM cartItems WHERE id = ?';
 
   try {
     const { rows } = await getSqlQueryResult(sql, [id]);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '아이템 삭제 성공' });
+    } else {
+      throwError('ER_UNPROCESSABLE_ENTITY');
     }
   } catch (err) {
     handleError(res, err);
@@ -111,8 +112,11 @@ const updateCartItemCount = async (req, res) => {
 
   try {
     const updateResult = await updateCartItemQuantity(id, quantity, undefined);
+
     if (updateResult.rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '수량 변경 성공' });
+    } else {
+      throwError('ER_UNPROCESSABLE_ENTITY');
     }
   } catch (err) {
     handleError(res, err);
