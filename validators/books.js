@@ -1,7 +1,7 @@
 const { param, query } = require('express-validator');
 const validateAndProceed = require('./validateAndProceed');
 
-const validateCategoryId = query('categoryId')
+const validateCategoryId = query('category_id')
   .trim()
   .notEmpty()
   .isNumeric()
@@ -37,7 +37,7 @@ const validateQuery = query('query')
   .isString()
   .withMessage('검색어는 문자열이어야 함');
 
-const validateBookId = param('bookId').trim().notEmpty();
+const validateBookId = param('book_id').trim().notEmpty();
 
 const validatesGetBooks = [
   validateCategoryId.optional(),

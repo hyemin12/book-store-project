@@ -6,7 +6,7 @@ const { validateLikes } = require('../validators/likes');
 router.use(express.json());
 
 router
-  .route('/:bookId')
+  .route('/:book_id')
   .post(validateLikes, postLike)
   .delete(validateLikes, deleteLike);
 

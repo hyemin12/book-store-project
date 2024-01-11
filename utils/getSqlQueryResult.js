@@ -1,10 +1,10 @@
 const mysql = require('../mysql');
 
 /** sql문을 실행하고, 결과값을 받는 함수
- * sql: 실행할 sql문
- * values: 바인딩할 파라미터
- * connection: DB 연결 여부
- * keepConnection: 연결 종료 여부(여러 개의 sql문을 실행할 때는 true값을 전달해야 함)
+ * @param sql 실행할 sql문
+ * @param values 바인딩할 파라미터
+ * @param connection DB 연결 여부
+ * @param keepConnection 연결 종료 여부(여러 개의 sql문을 실행할 때는 true값을 전달해야 함)
  */
 const getSqlQueryResult = async (
   sql,

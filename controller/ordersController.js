@@ -1,10 +1,10 @@
 const { StatusCodes } = require('http-status-codes');
+const camelcaseKeys = require('camelcase-keys');
 const mysql = require('../mysql');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleError = require('../utils/handleError');
-const throwError = require('../utils/throwError');
-const checkExist = require('../utils/checkExist');
+const { handleError, throwError } = require('../utils/handleError');
+const checkDataExistence = require('../utils/checkDataExistence');
 
 /* 주문 프로세스
  * 1. 클라이언트에서 전달받은 delivery 데이터가 delivery 테이블에 존재하는지 확인
@@ -21,13 +21,11 @@ const postOrder = async (req, res, next) => {
     delivery,
     payment,
     totalPrice,
-    user_id,
+    userId,
     totalQuantity,
-    FirstBookTitle
-  } = req.body;
+    firstBookTitle
+  } = camelcaseKeys(req.body);
 
-  const checkExistDeliveySql =
-    'SELECT * from delivery WHERE recipient= ? AND address = ? AND contact = ?';
   const sqlDelivery = `
     INSERT INTO delivery 
     (recipient,address,contact) 
@@ -39,20 +37,20 @@ const postOrder = async (req, res, next) => {
     delivery.contact
   ];
 
-  let delivery_id = 0;
+  let deliveryId = 0;
   const booksLength = books.length - 1;
 
   const conn = await mysql.getConnection();
 
   try {
     // Step 1: Delivery 정보 확인 및 추가
-    const { isExist, rows: rowsExistDelivery } = await checkExist(
-      checkExistDeliveySql,
+    const { isExist, rows: rowsExistDelivery } = await checkDataExistence(
+      'delivery',
       valuesDelivery,
       conn
     );
     if (isExist) {
-      delivery_id = rowsExistDelivery[0].id;
+      deliveryId = rowsExistDelivery[0].id;
     } else {
       const { rows } = await getSqlQueryResult(
         sqlDelivery,
@@ -60,7 +58,7 @@ const postOrder = async (req, res, next) => {
         conn,
         true
       );
-      delivery_id = rows.insertId;
+      deliveryId = rows.insertId;
     }
 
     const sqlOrders = `
@@ -69,12 +67,12 @@ const postOrder = async (req, res, next) => {
       VALUES (?,?,?,?,?,?)
     `;
     const valuesOrders = [
-      FirstBookTitle,
+      firstBookTitle,
       totalQuantity,
       totalPrice,
       payment,
-      delivery_id,
-      user_id
+      deliveryId,
+      userId
     ];
 
     // Step 2: Orders 테이블에 주문 내역 추가
@@ -84,7 +82,7 @@ const postOrder = async (req, res, next) => {
       conn,
       true
     );
-    const order_id = rows.insertId;
+    const orderId = rows.insertId;
 
     // orderedbook table sql문
     const sqlOrderedBook = `
@@ -95,7 +93,7 @@ const postOrder = async (req, res, next) => {
     const valuesOrderedBook = [];
     const valuesDeleteCart = [];
     books.forEach((item) => {
-      valuesOrderedBook.push(order_id, item.book_id, item.quantity);
+      valuesOrderedBook.push(orderId, item.book_id, item.quantity);
       valuesDeleteCart.push(item.cartItem_id);
     });
 
@@ -113,7 +111,7 @@ const postOrder = async (req, res, next) => {
       throwError('ER_UNPROCESSABLE_ENTITY');
     }
 
-    // Commit the transaction
+    // Step 5: 변경내역 확정
     await conn.commit();
   } catch (err) {
     await conn.rollback();
@@ -155,7 +153,7 @@ const getOrders = async (req, res, next) => {
 
 /** 주문 내역 상세 조회 */
 const getOrderDetail = async (req, res, next) => {
-  const { order_id: orderId } = req.params;
+  const { orderId } = camelcaseKeys(req.params);
 
   const sql = `
     SELECT book_id, title AS book_title, author, price, quantity

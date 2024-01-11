@@ -3,9 +3,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleError = require('../utils/handleError');
-const throwError = require('../utils/throwError');
-const checkExist = require('../utils/checkExist');
+const { handleError, throwError } = require('../utils/handleError');
+const checkDataExistence = require('../utils/checkDataExistence');
 
 // ENV KEY
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
@@ -21,14 +20,8 @@ const hashPassword = async (password) => {
   try {
     return await bcrypt.hash(password, saltRounds);
   } catch (error) {
-    throw new Error('비밀번호 해싱 중 에러 발생');
+    throwError('비밀번호 해싱 중 에러 발생');
   }
-};
-
-/** 이메일 존재 여부 확인 */
-const checkEmailExistence = async (email) => {
-  const sql = 'SELECT * FROM users WHERE email = ?';
-  return checkExist(sql, [email]);
 };
 
 /** 회원가입 */
@@ -40,7 +33,7 @@ const joinUser = async (req, res, next) => {
   const values = [email, hashedPassword];
 
   try {
-    const { isExist, conn } = await checkEmailExistence(email);
+    const { isExist, conn } = await checkDataExistence('email', [email]);
 
     if (isExist) {
       throwError('ER_ALREADY_EXISTS_EMAIL');
@@ -65,7 +58,7 @@ const loginUser = async (req, res, next) => {
   const sql = 'SELECT * FROM users WHERE email = ?';
 
   try {
-    const { isExist, conn } = await checkEmailExistence(email);
+    const { isExist, conn } = await checkDataExistence('email', [email]);
 
     if (!isExist) {
       throwError('ER_NOT_FOUND_EMAIL');
@@ -124,11 +117,17 @@ const resetPassword = async (req, res, next) => {
   const { email, password } = req.body;
   const hashedPassword = await hashPassword(password);
 
-  const sql = 'UPDATE users SET password = ? WHERE email = ?';
-  const values = [hashedPassword, email];
-
   try {
-    const { rows } = await getSqlQueryResult(sql, values);
+    const { isExist, conn } = await checkDataExistence('email', [email]);
+
+    if (!isExist) {
+      throwError('ER_NOT_FOUND_EMAIL');
+    }
+
+    const sql = 'UPDATE users SET password = ? WHERE email = ?';
+    const values = [hashedPassword, email];
+
+    const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '비밀번호 초기화 성공' });
