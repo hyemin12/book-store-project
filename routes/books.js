@@ -15,6 +15,6 @@ router.use(express.json());
 
 router.get('/', validatesGetBooks, getBooks);
 router.get('/search', validatesSearchBooks, getSearchBooks);
-router.get('/:bookId', validatesBook, getIndividualBook);
+router.get('/:book_id', validatesBook, getIndividualBook);
 
 module.exports = router;

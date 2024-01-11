@@ -9,7 +9,7 @@ const handleError = require('../utils/handleError');
 function buildBaseBookQuery(userId) {
   let sql = `
     SELECT books.*,
-      (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
+    (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
     FROM books
     LEFT JOIN category ON category.category_id = books.category_id
   `;
@@ -17,8 +17,8 @@ function buildBaseBookQuery(userId) {
   if (userId) {
     sql = `
     SELECT books.*,
-      (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
-      (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
+    (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
+    (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
     FROM books
     LEFT JOIN category ON category.category_id = books.category_id
     `;
@@ -35,7 +35,7 @@ function buildBaseBookQuery(userId) {
  */
 const getBooks = async (req, res) => {
   const {
-    category_id,
+    category_id: categoryId,
     new: fetchNewBooks,
     page: userInputPage,
     limit: userInputLimit
@@ -46,13 +46,13 @@ const getBooks = async (req, res) => {
   let sql = buildBaseBookQuery(userId);
   const values = userId ? [userId] : [];
 
-  if (category_id) {
+  if (categoryId) {
     sql += ' WHERE books.category_id = ?';
-    values.push(category_id);
+    values.push(categoryId);
   }
 
   if (fetchNewBooks) {
-    sql += category_id ? ' AND' : ' WHERE';
+    sql += categoryId ? ' AND' : ' WHERE';
     sql += ' published_at BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()';
   }
 
@@ -61,6 +61,8 @@ const getBooks = async (req, res) => {
   const page = userInputPage || 1;
   const offset = limit * (page - 1);
   sql += ` LIMIT ${limit} OFFSET ${offset}`;
+
+  console.log(userInputLimit, userInputPage, sql);
 
   try {
     const { rows } = await getSqlQueryResult(sql, values);
@@ -72,7 +74,7 @@ const getBooks = async (req, res) => {
 
 /** 개별 도서 조회 */
 const getIndividualBook = async (req, res) => {
-  const { bookId } = req.params;
+  const { book_id: bookId } = req.params;
   const userId = req.body ? req.body.user_id : null;
 
   let sql = buildBaseBookQuery(userId);
@@ -94,8 +96,9 @@ const getIndividualBook = async (req, res) => {
 
 /** 도서 검색 */
 const getSearchBooks = async (req, res, next) => {
-  const { page, limit: userInputLimit, query } = req.query;
+  const { page: userInputPage, limit: userInputLimit, query } = req.query;
 
+  const page = userInputPage || 1;
   const limit = userInputLimit || 6;
   const offset = limit * (page - 1);
 
