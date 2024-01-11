@@ -1,9 +1,9 @@
 const { StatusCodes } = require('http-status-codes');
+const camelcaseKeys = require('camelcase-keys');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleError = require('../utils/handleError');
-const checkExist = require('../utils/checkExist');
-const throwError = require('../utils/throwError');
+const { handleError, throwError } = require('../utils/handleError');
+const checkDataExistence = require('../utils/checkDataExistence');
 
 /** 장바구니 아이템 수량 변경 */
 const updateCartItemQuantity = async (itemId, newQuantity, conn) => {
@@ -16,30 +16,33 @@ const updateCartItemQuantity = async (itemId, newQuantity, conn) => {
  * 이미 장바구니에 존재하는 아이템이라면 수량을 1 증가시킴
  */
 const addToCart = async (req, res) => {
-  const { user_id, book_id, quantity } = req.body;
-
-  const checkExistItemSql = `
-    SELECT * FROM cartItems 
-    WHERE user_id = ? AND book_id = ?
-  `;
+  const { userId, bookId, quantity } = camelcaseKeys(req.body);
 
   try {
-    const {
-      rows: rowsExist,
-      isExist,
-      conn
-    } = await checkExist(checkExistItemSql, [user_id, book_id]);
+    // Step 1: 도서가 DB에 존재하는지 확인
+    const { isExist: isExistBook, conn } = await checkDataExistence('book', [
+      bookId
+    ]);
+
+    if (!isExistBook) {
+      throwError('NOT_FOUND');
+    }
+
+    // Step 2: 장바구니에 이미 담겨있는 아이템인지 확인
+    const { rows: rowsExistCartItem, isExist: isExistItemToCart } =
+      await checkDataExistence('itemToCart', [userId, bookId], conn);
 
     // 존재하는 경우 장바구니에 있는 수량 1 더하기
-    if (isExist) {
-      const { id, quantity } = rowsExist[0];
+    if (isExistItemToCart) {
+      const { id, quantity } = rowsExistCartItem[0];
       const addQuantity = quantity + 1;
-      const updateResult = await updateCartItemQuantity(id, addQuantity, conn);
+      const { rows } = await updateCartItemQuantity(id, addQuantity, conn);
 
-      if (updateResult.rows.affectedRows > 0) {
-        return res
-          .status(StatusCodes.OK)
-          .send({ message: `이미 존재하는 아이템! ${addQuantity}` });
+      if (rows.affectedRows > 0) {
+        return res.status(StatusCodes.OK).send({
+          message: `이미 존재하는 아이템!  수량 추가. 
+            변경된 수량: ${addQuantity}`
+        });
       } else {
         throwError(ERROR_UNPROCESSABLE_ENTITY);
       }
@@ -47,7 +50,9 @@ const addToCart = async (req, res) => {
 
     const sql =
       'INSERT INTO cartItems (book_id,quantity,user_id) VALUES (?,?,?)';
-    const values = [book_id, quantity, user_id];
+    const values = [bookId, quantity, userId];
+
+    // Step 3: 장바구니에 담기
     const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
@@ -64,7 +69,7 @@ const addToCart = async (req, res) => {
  * selected: 선택된 아이템의 목록
  */
 const getCartsItems = async (req, res) => {
-  const { user_id, selected } = req.body;
+  const { user_id: userId, selected } = req.body;
 
   let sql = `SELECT 
     cartItems.id, book_id, title, summary, price, quantity 
@@ -72,7 +77,7 @@ const getCartsItems = async (req, res) => {
     LEFT JOIN books ON cartItems.book_id = books.id
     WHERE user_id = ?
 		`;
-  const values = [user_id];
+  const values = [userId];
 
   if (selected) {
     sql += `AND cartItems.id IN (?${',?'.repeat(selected.length - 1)})`;

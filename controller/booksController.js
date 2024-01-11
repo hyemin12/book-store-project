@@ -1,7 +1,8 @@
 const { StatusCodes } = require('http-status-codes');
+const camelcaseKeys = require('camelcase-keys');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleError = require('../utils/handleError');
+const { handleError } = require('../utils/handleError');
 
 /** books의 기본 쿼리를 리턴하는 함수
  *  userId가 있으면 유저가 좋아요를 클릭했는지 여부를 확인하고 반환
@@ -28,18 +29,18 @@ function buildBaseBookQuery(userId) {
 }
 
 /** 도서 조회
- * category_id: 카테고리별로 조회할 때 사용
- * new: 신간을 조회할 때 사용
- * page: 페이지 (입력하지 않으면 기본값으로 1 설정)
- * limit: 전달받을 개수 (입력하지 않으면 기본값으로 8 설정)
+ * @param category_id: 카테고리별로 조회할 때 사용
+ * @param new: 신간을 조회할 때 사용
+ * @param page: 페이지 (입력하지 않으면 기본값으로 1 설정)
+ * @param limit: 전달받을 개수 (입력하지 않으면 기본값으로 8 설정)
  */
 const getBooks = async (req, res) => {
   const {
-    category_id: categoryId,
+    categoryId,
     new: fetchNewBooks,
     page: userInputPage,
     limit: userInputLimit
-  } = req.query;
+  } = camelcaseKeys(req.query);
 
   const userId = req.body ? req.body.user_id : null;
 
@@ -62,8 +63,6 @@ const getBooks = async (req, res) => {
   const offset = limit * (page - 1);
   sql += ` LIMIT ${limit} OFFSET ${offset}`;
 
-  console.log(userInputLimit, userInputPage, sql);
-
   try {
     const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
@@ -74,11 +73,11 @@ const getBooks = async (req, res) => {
 
 /** 개별 도서 조회 */
 const getIndividualBook = async (req, res) => {
-  const { book_id: bookId } = req.params;
+  const { bookId } = camelcaseKeys(req.params);
   const userId = req.body ? req.body.user_id : null;
 
   let sql = buildBaseBookQuery(userId);
-  let values = [bookId];
+  const values = [bookId];
 
   if (userId) {
     values.unshift(userId);

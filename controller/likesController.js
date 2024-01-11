@@ -1,33 +1,26 @@
 const { StatusCodes } = require('http-status-codes');
+const camelcaseKeys = require('camelcase-keys');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
-const handleError = require('../utils/handleError');
-const throwError = require('../utils/throwError');
-const checkExist = require('../utils/checkExist');
-
-/** 좋아요 존재 여부 확인 */
-const checkLikeExist = async (values) => {
-  const sql = 'SELECT * FROM likes  WHERE user_id = ? AND book_id = ?';
-  return checkExist(sql, values);
-};
+const { handleError, throwError } = require('../utils/handleError');
+const checkDataExistence = require('../utils/checkDataExistence');
 
 /** 좋아요 추가 */
 const postLike = async (req, res, next) => {
-  const { bookId } = req.params;
+  const { bookId } = camelcaseKeys(req.params);
   const { user_id } = req.body;
 
-  const insertLikeSql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
+  const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
   const values = [user_id, bookId];
 
   try {
-    // 좋아요 존재 여부 확인
-    const { isExist, conn } = await checkLikeExist(values);
+    const { isExist, conn } = await checkDataExistence('like', values);
 
     if (isExist) {
       throwError('ER_ALREADY_EXISTS_LIKE');
     }
 
-    const { rows } = await getSqlQueryResult(insertLikeSql, values, conn);
+    const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '좋아요 추가 성공' });
@@ -41,7 +34,7 @@ const postLike = async (req, res, next) => {
 
 /** 좋아요 삭제 */
 const deleteLike = async (req, res, next) => {
-  const { bookId } = req.params;
+  const { bookId } = camelcaseKeys(req.params);
   const { user_id } = req.body;
 
   const sql = `
@@ -51,7 +44,7 @@ const deleteLike = async (req, res, next) => {
   const values = [user_id, bookId];
 
   try {
-    const { isExist, conn } = await checkLikeExist(values);
+    const { isExist, conn } = await checkDataExistence('like', values);
 
     if (!isExist) {
       throwError('ER_NOT_FOUND');
@@ -60,7 +53,7 @@ const deleteLike = async (req, res, next) => {
     const { rows } = await getSqlQueryResult(sql, values, conn);
 
     if (rows.affectedRows > 0) {
-      res.status(StatusCodes.CREATED).send({ message: '좋아요 삭제 성공' });
+      res.status(StatusCodes.OK).send({ message: '좋아요 삭제 성공' });
     } else {
       throwError('ER_UNPROCESSABLE_ENTITY');
     }
