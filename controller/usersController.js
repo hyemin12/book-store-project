@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const handleError = require('../utils/handleError');
 const throwError = require('../utils/throwError');
+const checkExist = require('../utils/checkExist');
 
 // ENV KEY
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
@@ -107,6 +108,10 @@ const requestResetPassword = async (req, res, next) => {
 
   try {
     const { rows } = await getSqlQueryResult(sql, [email]);
+
+    if (rows.length) {
+      throwError('ER_NOT_FOUND_EMAIL');
+    }
 
     res.status(StatusCodes.OK).send({ email: rows[0].email });
   } catch (err) {

@@ -2,7 +2,7 @@ const { body } = require('express-validator');
 const validateAndProceed = require('./validateAndProceed');
 
 const validatePostOrder = [
-  body('lists').isArray().withMessage('상품 리스트는 배열이어야 함'),
+  body('books').isArray().withMessage('상품 리스트는 배열이어야 함'),
   body('delivery.recipient')
     .trim()
     .notEmpty()

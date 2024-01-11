@@ -20,3 +20,7 @@ INSERT INTO orderedbook (order_id,book_id,quantity) VALUES (order_id,1,1)
 SELECT MAX(delivery_id) FROM delivery;
 SELECT last_insert_id();
 
+TRUNCATE orderedbook;
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE orders;
+TRUNCATE delivery;

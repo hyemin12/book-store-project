@@ -13,6 +13,6 @@ router.use(express.json());
 
 router.route('/').post(validatePostOrder, postOrder).get(getOrders);
 
-router.get('/:orderId', getOrderDetail);
+router.get('/:order_id', getOrderDetail);
 
 module.exports = router;
