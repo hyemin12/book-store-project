@@ -16,6 +16,8 @@ const decodedJWT = (token) => {
   }
 };
 
+const checkUserExistenceQuery = 'SELECT * from users WHERE id = ?';
+
 /** token을 검증하고, 인증하는 함수
  * @param requireToken 로그인이 꼭 필요한지 여부
  */
@@ -24,17 +26,15 @@ const ensureAuthorization =
   async (req, res, next) => {
     const token = req.headers['authorization'];
 
-    if (!token && requireToken) throwError('ER_NO_TOKEN');
+    if (!token && requireToken) return handleError(res, 'ER_NO_TOKEN');
 
-    console.log(token);
     try {
       if (token) {
         const decodedToken = await decodedJWT(token);
 
-        if (decodedToken.iss !== TOKEN_ISSUER)
-          throwError(res, 'ER_INVALID_ISSUER');
+        if (decodedToken.iss !== TOKEN_ISSUER) throwError(res, 'ER_INVALID_ISSUER');
 
-        const { isExist } = await checkDataExistence('user', [decodedToken.id]);
+        const { isExist } = await checkDataExistence(checkUserExistenceQuery, [decodedToken.id]);
 
         if (!isExist) {
           throwError(res, 'ER_INVALID_USER');

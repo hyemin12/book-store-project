@@ -1,10 +1,11 @@
 const { StatusCodes } = require('http-status-codes');
 const camelcaseKeys = require('camelcase-keys');
-const mysql = require('../mysql');
+const pool = require('../mysql');
 
-const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const { handleError, throwError } = require('../utils/handleError');
 const checkDataExistence = require('../utils/checkDataExistence');
+
+const checkDeliveryExistenceQuery = 'SELECT * from delivery WHERE recipient = ? AND address = ? AND contact = ?';
 
 /* 주문 프로세스
  * 1. 클라이언트에서 전달받은 delivery 데이터가 delivery 테이블에 존재하는지 확인
@@ -16,49 +17,31 @@ const checkDataExistence = require('../utils/checkDataExistence');
  */
 /** 주문하기 (결제 하기) */
 const postOrder = async (req, res, next) => {
-  const {
-    books,
-    delivery,
-    payment,
-    totalPrice,
-    totalQuantity,
-    firstBookTitle
-  } = camelcaseKeys(req.body);
+  const { books, delivery, payment, totalPrice, totalQuantity, firstBookTitle } = camelcaseKeys(req.body);
 
-  const userId = req.user.id;
+  const userId = req.user?.id ?? undefined;
 
   const sqlDelivery = `
     INSERT INTO delivery 
     (recipient,address,contact) 
     VALUES (?,?,?)
   `;
-  const valuesDelivery = [
-    delivery.recipient,
-    delivery.address,
-    delivery.contact
-  ];
+  const valuesDelivery = [delivery.recipient, delivery.address, delivery.contact];
 
   let deliveryId = 0;
   const booksLength = books.length - 1;
 
-  const conn = await mysql.getConnection();
+  const conn = await pool.getConnection();
 
   try {
+    await conn.beginTransaction();
+
     // Step 1: Delivery 정보 확인 및 추가
-    const { isExist, rows: rowsExistDelivery } = await checkDataExistence(
-      'delivery',
-      valuesDelivery,
-      conn
-    );
+    const { isExist, rows: rowsExistDelivery } = await checkDataExistence(checkDeliveryExistenceQuery, valuesDelivery);
     if (isExist) {
       deliveryId = rowsExistDelivery[0].id;
     } else {
-      const { rows } = await getSqlQueryResult(
-        sqlDelivery,
-        valuesDelivery,
-        conn,
-        true
-      );
+      const [rows] = await conn.execute(sqlDelivery, valuesDelivery);
       deliveryId = rows.insertId;
     }
 
@@ -67,22 +50,10 @@ const postOrder = async (req, res, next) => {
       (book_title, total_quantity, total_price, payment, delivery_id, user_id)
       VALUES (?,?,?,?,?,?)
     `;
-    const valuesOrders = [
-      firstBookTitle,
-      totalQuantity,
-      totalPrice,
-      payment,
-      deliveryId,
-      userId
-    ];
+    const valuesOrders = [firstBookTitle, totalQuantity, totalPrice, payment, deliveryId, userId];
 
     // Step 2: Orders 테이블에 주문 내역 추가
-    const { rows } = await getSqlQueryResult(
-      sqlOrders,
-      valuesOrders,
-      conn,
-      true
-    );
+    const [rows] = await conn.execute(sqlOrders, valuesOrders);
 
     const orderId = rows.insertId;
 
@@ -99,43 +70,35 @@ const postOrder = async (req, res, next) => {
     });
 
     // Step 3: OrderedBook 테이블에 주문한 도서 목록 추가
-    await getSqlQueryResult(sqlOrderedBook, valuesOrderedBook, conn, true);
+    await conn.execute(sqlOrderedBook, valuesOrderedBook);
+
+    const sqlDeleteCart = `
+    DELETE FROM cartItems
+    WHERE id IN (?${',?'.repeat(booksLength)})
+  `;
 
     // Step 4: 장바구니 목록에서 주문한 도서 목록 삭제
-    const result = await deleteCartItem(valuesDeleteCart, booksLength, conn);
+    const [result] = await conn.execute(sqlDeleteCart, valuesDeleteCart);
 
     if (result.affectedRows > 0) {
-      res
-        .status(StatusCodes.OK)
-        .send({ message: '결제 성공 및 장바구니 아이템 삭제' });
+      // Step 5: 변경내역 확정
+      await conn.commit();
+      res.status(StatusCodes.OK).send({ message: '결제 성공 및 장바구니 아이템 삭제' });
     } else {
       console.error('장바구니 아이템 삭제 실패');
       throwError('ER_UNPROCESSABLE_ENTITY');
     }
-
-    // Step 5: 변경내역 확정
-    await conn.commit();
   } catch (err) {
     await conn.rollback();
     handleError(res, err);
   } finally {
-    conn.release();
+    if (conn) conn.release();
   }
-};
-
-/** 장바구니 아이템 삭제 */
-const deleteCartItem = async (values, booksLength, conn) => {
-  const sqlDeleteCart = `
-  DELETE FROM cartItems
-  WHERE id IN (?${',?'.repeat(booksLength)})
-`;
-  const { rows } = await getSqlQueryResult(sqlDeleteCart, values, conn, true);
-  return rows;
 };
 
 /** 주문 내역 조회 */
 const getOrders = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user?.id ?? undefined;
 
   const sql = `
     SELECT orders.id, created_at, recipient, address, contact, total_quantity, total_price
@@ -146,7 +109,7 @@ const getOrders = async (req, res) => {
   const values = [userId];
 
   try {
-    const { rows } = await getSqlQueryResult(sql, values);
+    const [rows] = await pool.execute(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
     handleError(res, err);
@@ -166,7 +129,7 @@ const getOrderDetail = async (req, res) => {
   const values = [orderId];
 
   try {
-    const { rows } = await getSqlQueryResult(sql, values);
+    const [rows] = await pool.execute(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
     handleError(res, err);

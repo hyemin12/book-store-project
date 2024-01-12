@@ -1,8 +1,8 @@
 const { StatusCodes } = require('http-status-codes');
+const pool = require('../mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const { handleError, throwError } = require('../utils/handleError');
 const checkDataExistence = require('../utils/checkDataExistence');
 
@@ -24,8 +24,10 @@ const hashPassword = async (password) => {
   }
 };
 
+const checkEmailExistenceQuery = 'SELECT * FROM users WHERE email = ?';
+
 /** 회원가입 */
-const joinUser = async (req, res, next) => {
+const joinUser = async (req, res) => {
   const { email, password } = req.body;
   const hashedPassword = await hashPassword(password);
 
@@ -33,13 +35,13 @@ const joinUser = async (req, res, next) => {
   const values = [email, hashedPassword];
 
   try {
-    const { isExist, conn } = await checkDataExistence('email', [email]);
+    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, [email]);
 
     if (isExist) {
       throwError('ER_ALREADY_EXISTS_EMAIL');
     }
 
-    const { rows } = await getSqlQueryResult(sql, values, conn);
+    const [rows] = await pool.execute(sql, values);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.CREATED).send({ message: '회원가입 완료' });
@@ -52,19 +54,20 @@ const joinUser = async (req, res, next) => {
 };
 
 /** 로그인 */
-const loginUser = async (req, res, next) => {
+const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   const sql = 'SELECT * FROM users WHERE email = ?';
+  const values = [email];
 
   try {
-    const { isExist, conn } = await checkDataExistence('email', [email]);
+    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, values);
 
     if (!isExist) {
       throwError('ER_NOT_FOUND_EMAIL');
     }
 
-    const { rows } = await getSqlQueryResult(sql, [email], conn);
+    const [rows] = await pool.execute(sql, values);
     const [loginUser] = rows;
 
     // 비밀번호 검증
@@ -75,14 +78,10 @@ const loginUser = async (req, res, next) => {
     }
 
     // 토큰 생성
-    const token = jwt.sign(
-      { email: loginUser.email, id: loginUser.id },
-      TOKEN_PRIVATE_KEY,
-      {
-        expiresIn: '1h',
-        issuer: TOKEN_ISSUER
-      }
-    );
+    const token = jwt.sign({ email: loginUser.email, id: loginUser.id }, TOKEN_PRIVATE_KEY, {
+      expiresIn: '1h',
+      issuer: TOKEN_ISSUER
+    });
 
     res
       .status(StatusCodes.OK)
@@ -101,19 +100,17 @@ const loginUser = async (req, res, next) => {
 /** 비밀번호 초기화 요청 */
 const requestResetPassword = async (req, res, next) => {
   const { email } = req.body;
-  const token = req.headers['authorization'];
 
-  const sql = 'SELECT * FROM users WHERE email = ?';
-  const decoded = jwt.verify(token, TOKEN_PRIVATE_KEY);
+  const values = [email];
 
   try {
-    const { rows } = await getSqlQueryResult(sql, [email]);
+    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, values);
 
-    if (rows.length) {
+    if (!isExist) {
       throwError('ER_NOT_FOUND_EMAIL');
     }
 
-    res.status(StatusCodes.OK).send({ email: rows[0].email });
+    res.status(StatusCodes.OK).send({ email });
   } catch (err) {
     handleError(res, err);
   }
@@ -125,7 +122,7 @@ const resetPassword = async (req, res, next) => {
   const hashedPassword = await hashPassword(password);
 
   try {
-    const { isExist, conn } = await checkDataExistence('email', [email]);
+    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, [email]);
 
     if (!isExist) {
       throwError('ER_NOT_FOUND_EMAIL');
@@ -134,7 +131,7 @@ const resetPassword = async (req, res, next) => {
     const sql = 'UPDATE users SET password = ? WHERE email = ?';
     const values = [hashedPassword, email];
 
-    const { rows } = await getSqlQueryResult(sql, values, conn);
+    const [rows] = await pool.execute(sql, values);
 
     if (rows.affectedRows > 0) {
       res.status(StatusCodes.OK).send({ message: '비밀번호 초기화 성공' });

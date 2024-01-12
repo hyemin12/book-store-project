@@ -1,9 +1,8 @@
 const { StatusCodes } = require('http-status-codes');
 const camelcaseKeys = require('camelcase-keys');
+const pool = require('../mysql');
 
-const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const { handleError } = require('../utils/handleError');
-const { decodedJWT } = require('../middleware/decodedJWT');
 
 /** 도서 조회
  * @param category_id: 카테고리별로 조회할 때 사용
@@ -12,14 +11,9 @@ const { decodedJWT } = require('../middleware/decodedJWT');
  * @param limit: 전달받을 개수 (입력하지 않으면 기본값으로 8 설정)
  */
 const getBooks = async (req, res) => {
-  const {
-    categoryId,
-    new: fetchNewBooks,
-    page,
-    limit
-  } = camelcaseKeys(req.query);
+  const { categoryId, new: fetchNewBooks, page, limit } = camelcaseKeys(req.query);
 
-  const userId = req.user.id;
+  const userId = req.user?.id ?? undefined;
 
   let sql = buildBaseBookQuery(userId);
   const values = userId ? [userId] : [];
@@ -41,7 +35,7 @@ const getBooks = async (req, res) => {
   sql += ` LIMIT ${requestedLimit} OFFSET ${offset}`;
 
   try {
-    const { rows } = await getSqlQueryResult(sql, values);
+    const [rows] = await pool.execute(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
     handleError(res, err);
@@ -52,7 +46,7 @@ const getBooks = async (req, res) => {
 const getIndividualBook = async (req, res) => {
   const { bookId } = camelcaseKeys(req.params);
 
-  const userId = req.user.id;
+  const userId = req.user?.id ?? undefined;
 
   let sql = buildBaseBookQuery(userId);
   const values = [bookId];
@@ -64,7 +58,7 @@ const getIndividualBook = async (req, res) => {
   sql += ' WHERE books.id = ?';
 
   try {
-    const { rows } = await getSqlQueryResult(sql, values);
+    const [rows] = await pool.execute(sql, values);
     res.status(StatusCodes.OK).send(rows);
   } catch (err) {
     handleError(res, err);
@@ -85,7 +79,7 @@ const getSearchBooks = async (req, res, next) => {
     LIMIT ${requestedLimit} OFFSET ${offset}`;
 
   try {
-    const { rows } = await getSqlQueryResult(sql, [query]);
+    const [rows] = await pool.execute(sql, [query]);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
     handleError(res, err);

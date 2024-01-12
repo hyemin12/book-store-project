@@ -76,9 +76,11 @@ const errors = {
 };
 
 const handleError = (res, error) => {
-  console.error(error);
-
   const name = error.name ?? error;
+
+  if (!name) {
+    console.error(error);
+  }
 
   const message = errors[name]?.message || '내부 서버 오류';
   const statusCode = errors[name]?.code || StatusCodes.INTERNAL_SERVER_ERROR;
