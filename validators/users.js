@@ -1,8 +1,7 @@
 const { body } = require('express-validator');
 const { StatusCodes } = require('http-status-codes');
 
-const validateAndProceed = require('./validateAndProceed');
-const getSqlQueryResult = require('../utils/getSqlQueryResult');
+const validateAndProceed = require('../middleware/validateAndProceed');
 
 const validateEmail = body('email')
   .trim()
@@ -25,16 +24,8 @@ const validatePassword = body('password')
   .isLength({ min: 8, max: 16 })
   .withMessage('비밀번호는 8~16글자이어야 함');
 
-const validatesJoin = [
-  validateEmailForJoin,
-  validatePassword,
-  validateAndProceed
-];
-const validatesLoginAndReset = [
-  validateEmail,
-  validatePassword,
-  validateAndProceed
-];
+const validatesJoin = [validateEmailForJoin, validatePassword, validateAndProceed];
+const validatesLoginAndReset = [validateEmail, validatePassword, validateAndProceed];
 const validatesEmail = [validateEmail, validateAndProceed];
 
 module.exports = { validatesLoginAndReset, validatesJoin, validatesEmail };

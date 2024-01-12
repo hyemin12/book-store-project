@@ -1,12 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const {
-  addToCart,
-  deleteCartsItem,
-  getCartsItems,
-  updateCartItemCount
-} = require('../controller/cartController');
+const { addToCart, deleteCartsItem, getCartsItems, updateCartItemCount } = require('../controller/cartController');
 
 const {
   validateAddToCart,
@@ -14,21 +9,18 @@ const {
   validateDeleteCartsItem,
   validateUpdateCartItemCount
 } = require('../validators/carts');
+const ensureAuthorization = require('../middleware/decodedJWT');
 
 router.use(express.json());
 
 router
   .route('/')
-  .post(validateAddToCart, addToCart)
-  .get(validateGetCartsItems, getCartsItems);
+  .post(validateAddToCart, ensureAuthorization(), addToCart)
+  .get(validateGetCartsItems, ensureAuthorization(), getCartsItems);
 
 router
   .route('/:id')
-  .delete(validateDeleteCartsItem, deleteCartsItem)
-  .put(validateUpdateCartItemCount, updateCartItemCount);
-
-router.route('/order').get(async (req, res, next) => {
-  res.status(200).send({ message: '장바구니에서 선택한 상품 목록 조회' });
-});
+  .delete(validateDeleteCartsItem, ensureAuthorization(), deleteCartsItem)
+  .put(validateUpdateCartItemCount, ensureAuthorization(), updateCartItemCount);
 
 module.exports = router;

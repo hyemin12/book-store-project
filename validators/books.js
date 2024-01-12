@@ -1,5 +1,5 @@
 const { param, query } = require('express-validator');
-const validateAndProceed = require('./validateAndProceed');
+const validateAndProceed = require('../middleware/validateAndProceed');
 
 const validateCategoryId = query('category_id')
   .trim()
@@ -31,11 +31,7 @@ const validatePage = query('page')
   .isInt({ min: 1 })
   .withMessage('페이지는 1 이상의 숫자여야 합니다.');
 
-const validateQuery = query('query')
-  .trim()
-  .notEmpty()
-  .isString()
-  .withMessage('검색어는 문자열이어야 함');
+const validateQuery = query('query').trim().notEmpty().isString().withMessage('검색어는 문자열이어야 함');
 
 const validateBookId = param('book_id').trim().notEmpty();
 
@@ -46,12 +42,7 @@ const validatesGetBooks = [
   validatePage.optional(),
   validateAndProceed
 ];
-const validatesSearchBooks = [
-  validateQuery,
-  validatePage.optional(),
-  validateLimit.optional(),
-  validateAndProceed
-];
+const validatesSearchBooks = [validateQuery, validatePage.optional(), validateLimit.optional(), validateAndProceed];
 const validatesBook = [validateBookId, validateAndProceed];
 
 module.exports = { validatesGetBooks, validatesSearchBooks, validatesBook };
