@@ -21,10 +21,11 @@ const postOrder = async (req, res, next) => {
     delivery,
     payment,
     totalPrice,
-    userId,
     totalQuantity,
     firstBookTitle
   } = camelcaseKeys(req.body);
+
+  const userId = req.user.id;
 
   const sqlDelivery = `
     INSERT INTO delivery 
@@ -82,9 +83,9 @@ const postOrder = async (req, res, next) => {
       conn,
       true
     );
+
     const orderId = rows.insertId;
 
-    // orderedbook table sql문
     const sqlOrderedBook = `
       INSERT INTO orderedbook
       (order_id, book_id, quantity)
@@ -108,6 +109,7 @@ const postOrder = async (req, res, next) => {
         .status(StatusCodes.OK)
         .send({ message: '결제 성공 및 장바구니 아이템 삭제' });
     } else {
+      console.error('장바구니 아이템 삭제 실패');
       throwError('ER_UNPROCESSABLE_ENTITY');
     }
 
@@ -132,8 +134,8 @@ const deleteCartItem = async (values, booksLength, conn) => {
 };
 
 /** 주문 내역 조회 */
-const getOrders = async (req, res, next) => {
-  const { user_id: userId } = req.body;
+const getOrders = async (req, res) => {
+  const userId = req.user.id;
 
   const sql = `
     SELECT orders.id, created_at, recipient, address, contact, total_quantity, total_price
@@ -152,7 +154,7 @@ const getOrders = async (req, res, next) => {
 };
 
 /** 주문 내역 상세 조회 */
-const getOrderDetail = async (req, res, next) => {
+const getOrderDetail = async (req, res) => {
   const { orderId } = camelcaseKeys(req.params);
 
   const sql = `

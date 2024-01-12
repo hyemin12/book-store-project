@@ -75,10 +75,14 @@ const loginUser = async (req, res, next) => {
     }
 
     // 토큰 생성
-    const token = jwt.sign({ email }, TOKEN_PRIVATE_KEY, {
-      expiresIn: '1h',
-      issuer: TOKEN_ISSUER
-    });
+    const token = jwt.sign(
+      { email: loginUser.email, id: loginUser.id },
+      TOKEN_PRIVATE_KEY,
+      {
+        expiresIn: '1h',
+        issuer: TOKEN_ISSUER
+      }
+    );
 
     res
       .status(StatusCodes.OK)
@@ -88,6 +92,7 @@ const loginUser = async (req, res, next) => {
         secure: process.env.NODE_ENV === 'production'
       })
       .send({ message: '로그인 성공' });
+    console.log(token);
   } catch (err) {
     handleError(res, err);
   }
@@ -96,8 +101,10 @@ const loginUser = async (req, res, next) => {
 /** 비밀번호 초기화 요청 */
 const requestResetPassword = async (req, res, next) => {
   const { email } = req.body;
+  const token = req.headers['authorization'];
 
   const sql = 'SELECT * FROM users WHERE email = ?';
+  const decoded = jwt.verify(token, TOKEN_PRIVATE_KEY);
 
   try {
     const { rows } = await getSqlQueryResult(sql, [email]);

@@ -4,16 +4,18 @@ const camelcaseKeys = require('camelcase-keys');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const { handleError, throwError } = require('../utils/handleError');
 const checkDataExistence = require('../utils/checkDataExistence');
+const { decodedJWT } = require('../middleware/decodedJWT');
 
 /** 좋아요 추가 */
 const postLike = async (req, res, next) => {
   const { bookId } = camelcaseKeys(req.params);
-  const { user_id } = req.body;
-
-  const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
-  const values = [user_id, bookId];
 
   try {
+    const userId = req.user.id;
+
+    const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
+    const values = [userId, bookId];
+
     const { isExist, conn } = await checkDataExistence('like', values);
 
     if (isExist) {
@@ -35,15 +37,16 @@ const postLike = async (req, res, next) => {
 /** 좋아요 삭제 */
 const deleteLike = async (req, res, next) => {
   const { bookId } = camelcaseKeys(req.params);
-  const { user_id } = req.body;
 
-  const sql = `
+  try {
+    const userId = req.user.id;
+
+    const sql = `
     DELETE FROM likes
     WHERE user_id = ? AND book_id = ?
   `;
-  const values = [user_id, bookId];
+    const values = [userId, bookId];
 
-  try {
     const { isExist, conn } = await checkDataExistence('like', values);
 
     if (!isExist) {

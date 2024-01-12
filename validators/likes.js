@@ -1,5 +1,5 @@
 const { param } = require('express-validator');
-const validateAndProceed = require('./validateAndProceed');
+const validateAndProceed = require('../middleware/validateAndProceed');
 
 const validateBookId = param('book_id')
   .trim()

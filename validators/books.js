@@ -1,5 +1,5 @@
 const { param, query } = require('express-validator');
-const validateAndProceed = require('./validateAndProceed');
+const validateAndProceed = require('../middleware/validateAndProceed');
 
 const validateCategoryId = query('category_id')
   .trim()

@@ -17,9 +17,29 @@ const errors = {
     code: StatusCodes.BAD_REQUEST,
     message: 'SQL 구문 오류'
   },
-  AuthenticationError: {
+  ValidationError: {
+    code: StatusCodes.BAD_REQUEST,
+    message: '잘못된 요청'
+  },
+  ER_NO_TOKEN: {
     code: StatusCodes.UNAUTHORIZED,
-    message: '인증에 실패'
+    message: '토큰 않음'
+  },
+  ER_SESSION_EXPIRED: {
+    code: StatusCodes.UNAUTHORIZED,
+    message: '로그인(인증) 세션이 만료되었습니다.'
+  },
+  ER_INVALID_TOKEN: {
+    code: StatusCodes.UNAUTHORIZED,
+    message: '토큰이 유효하지 않습니다.'
+  },
+  ER_INVALID_ISSUER: {
+    code: StatusCodes.UNPROCESSABLE_ENTITY,
+    message: '잘못된 토큰 발급자입니다.'
+  },
+  ER_NOT_MATCHED_PASSWORD: {
+    code: StatusCodes.UNAUTHORIZED,
+    message: '비밀번호 불일치'
   },
   ER_NOT_FOUND_EMAIL: {
     code: StatusCodes.NOT_FOUND,
@@ -41,26 +61,27 @@ const errors = {
     code: StatusCodes.CONFLICT,
     message: '이미 존재하는 데이터'
   },
-  ER_NOT_MATCHED_PASSWORD: {
-    code: StatusCodes.UNAUTHORIZED,
-    message: '비밀번호 불일치'
-  },
-  ValidationError: {
-    code: StatusCodes.BAD_REQUEST,
-    message: '잘못된 요청'
-  },
   ER_UNPROCESSABLE_ENTITY: {
     code: StatusCodes.UNPROCESSABLE_ENTITY,
     message: '처리할 수 없는 요청'
+  },
+  ER_UNKNOWN: {
+    code: StatusCodes.UNPROCESSABLE_ENTITY,
+    message: '알 수 없는 에러가 발생했습니다.'
+  },
+  ER_DATABASE: {
+    code: StatusCodes.INTERNAL_SERVER_ERROR,
+    message: '데이터베이스 조회 중 오류가 발생했습니다.'
   }
 };
 
 const handleError = (res, error) => {
   console.error(error);
 
-  const message = errors[error.name]?.message || '내부 서버 오류';
-  const statusCode =
-    errors[error.name]?.code || StatusCodes.INTERNAL_SERVER_ERROR;
+  const name = error.name ?? error;
+
+  const message = errors[name]?.message || '내부 서버 오류';
+  const statusCode = errors[name]?.code || StatusCodes.INTERNAL_SERVER_ERROR;
   res.status(statusCode).send({ message });
 };
 

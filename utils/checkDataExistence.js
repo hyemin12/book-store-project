@@ -31,10 +31,9 @@ const checkDataExistence = async (
       connection,
       true
     );
-
     return { isExist: !!rows.length, conn, rows };
   } catch (err) {
-    throwError('ER_UNPROCESSABLE_ENTITY');
+    throwError('ER_DATABASE');
   }
 };
 

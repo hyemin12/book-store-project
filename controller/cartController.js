@@ -5,20 +5,15 @@ const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const { handleError, throwError } = require('../utils/handleError');
 const checkDataExistence = require('../utils/checkDataExistence');
 
-/** 장바구니 아이템 수량 변경 */
-const updateCartItemQuantity = async (itemId, newQuantity, conn) => {
-  const sql = 'UPDATE cartItems SET quantity = ? WHERE id = ?';
-  const values = [newQuantity, itemId];
-  return await getSqlQueryResult(sql, values, conn);
-};
-
 /** 장바구니에 아이템 추가
  * 이미 장바구니에 존재하는 아이템이라면 수량을 1 증가시킴
  */
 const addToCart = async (req, res) => {
-  const { userId, bookId, quantity } = camelcaseKeys(req.body);
+  const { bookId, quantity } = camelcaseKeys(req.body);
 
   try {
+    const userId = req.user.id;
+
     // Step 1: 도서가 DB에 존재하는지 확인
     const { isExist: isExistBook, conn } = await checkDataExistence('book', [
       bookId
@@ -69,22 +64,23 @@ const addToCart = async (req, res) => {
  * selected: 선택된 아이템의 목록
  */
 const getCartsItems = async (req, res) => {
-  const { user_id: userId, selected } = req.body;
-
-  let sql = `SELECT 
-    cartItems.id, book_id, title, summary, price, quantity 
-    FROM cartItems 
-    LEFT JOIN books ON cartItems.book_id = books.id
-    WHERE user_id = ?
-		`;
-  const values = [userId];
-
-  if (selected) {
-    sql += `AND cartItems.id IN (?${',?'.repeat(selected.length - 1)})`;
-    values.push(...selected);
-  }
+  const { selected } = req.body;
 
   try {
+    const userId = req.user.id;
+
+    let sql = `SELECT 
+      cartItems.id, book_id, title, summary, price, quantity 
+      FROM cartItems 
+      LEFT JOIN books ON cartItems.book_id = books.id
+      WHERE user_id = ?`;
+    const values = [userId];
+
+    if (selected) {
+      sql += ` AND cartItems.id IN (?${',?'.repeat(selected.length - 1)})`;
+      values.push(...selected);
+    }
+
     const { rows } = await getSqlQueryResult(sql, values);
     res.status(StatusCodes.OK).send({ lists: rows });
   } catch (err) {
@@ -126,6 +122,13 @@ const updateCartItemCount = async (req, res) => {
   } catch (err) {
     handleError(res, err);
   }
+};
+
+/** 장바구니 아이템 수량 변경 */
+const updateCartItemQuantity = async (itemId, newQuantity, conn) => {
+  const sql = 'UPDATE cartItems SET quantity = ? WHERE id = ?';
+  const values = [newQuantity, itemId];
+  return await getSqlQueryResult(sql, values, conn);
 };
 
 module.exports = {

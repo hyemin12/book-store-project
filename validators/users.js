@@ -1,7 +1,7 @@
 const { body } = require('express-validator');
 const { StatusCodes } = require('http-status-codes');
 
-const validateAndProceed = require('./validateAndProceed');
+const validateAndProceed = require('../middleware/validateAndProceed');
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 
 const validateEmail = body('email')

@@ -3,30 +3,7 @@ const camelcaseKeys = require('camelcase-keys');
 
 const getSqlQueryResult = require('../utils/getSqlQueryResult');
 const { handleError } = require('../utils/handleError');
-
-/** books의 기본 쿼리를 리턴하는 함수
- *  userId가 있으면 유저가 좋아요를 클릭했는지 여부를 확인하고 반환
- */
-function buildBaseBookQuery(userId) {
-  let sql = `
-    SELECT books.*,
-    (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
-    FROM books
-    LEFT JOIN category ON category.category_id = books.category_id
-  `;
-
-  if (userId) {
-    sql = `
-    SELECT books.*,
-    (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
-    (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
-    FROM books
-    LEFT JOIN category ON category.category_id = books.category_id
-    `;
-  }
-
-  return sql;
-}
+const { decodedJWT } = require('../middleware/decodedJWT');
 
 /** 도서 조회
  * @param category_id: 카테고리별로 조회할 때 사용
@@ -38,11 +15,11 @@ const getBooks = async (req, res) => {
   const {
     categoryId,
     new: fetchNewBooks,
-    page: userInputPage,
-    limit: userInputLimit
+    page,
+    limit
   } = camelcaseKeys(req.query);
 
-  const userId = req.body ? req.body.user_id : null;
+  const userId = req.user.id;
 
   let sql = buildBaseBookQuery(userId);
   const values = userId ? [userId] : [];
@@ -58,10 +35,10 @@ const getBooks = async (req, res) => {
   }
 
   // 페이징 추가
-  const limit = userInputLimit || 8;
-  const page = userInputPage || 1;
-  const offset = limit * (page - 1);
-  sql += ` LIMIT ${limit} OFFSET ${offset}`;
+  const requestedLimit = limit || 8;
+  const requestedPage = page || 1;
+  const offset = requestedLimit * (requestedPage - 1);
+  sql += ` LIMIT ${requestedLimit} OFFSET ${offset}`;
 
   try {
     const { rows } = await getSqlQueryResult(sql, values);
@@ -74,7 +51,8 @@ const getBooks = async (req, res) => {
 /** 개별 도서 조회 */
 const getIndividualBook = async (req, res) => {
   const { bookId } = camelcaseKeys(req.params);
-  const userId = req.body ? req.body.user_id : null;
+
+  const userId = req.user.id;
 
   let sql = buildBaseBookQuery(userId);
   const values = [bookId];
@@ -95,16 +73,16 @@ const getIndividualBook = async (req, res) => {
 
 /** 도서 검색 */
 const getSearchBooks = async (req, res, next) => {
-  const { page: userInputPage, limit: userInputLimit, query } = req.query;
+  const { page, limit, query } = req.query;
 
-  const page = userInputPage || 1;
-  const limit = userInputLimit || 6;
-  const offset = limit * (page - 1);
+  const requestedPage = page || 1;
+  const requestedLimit = limit || 6;
+  const offset = requestedLimit * (requestedPage - 1);
 
   const sql = `
     SELECT * FROM books 
     WHERE title LIKE CONCAT("%", ?, "%") 
-    LIMIT ${limit} OFFSET ${offset}`;
+    LIMIT ${requestedLimit} OFFSET ${offset}`;
 
   try {
     const { rows } = await getSqlQueryResult(sql, [query]);
@@ -112,6 +90,30 @@ const getSearchBooks = async (req, res, next) => {
   } catch (err) {
     handleError(res, err);
   }
+};
+
+/** books의 기본 쿼리를 리턴하는 함수
+ *  userId가 있으면 유저가 좋아요를 클릭했는지 여부를 확인하고 반환
+ */
+const buildBaseBookQuery = (userId) => {
+  let sql = `
+    SELECT books.*,
+    (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
+    FROM books
+    LEFT JOIN category ON category.category_id = books.category_id
+  `;
+
+  if (userId) {
+    sql = `
+    SELECT books.*,
+    (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
+    (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
+    FROM books
+    LEFT JOIN category ON category.category_id = books.category_id
+    `;
+  }
+
+  return sql;
 };
 
 module.exports = {

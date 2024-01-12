@@ -1,5 +1,5 @@
 const { body } = require('express-validator');
-const validateAndProceed = require('./validateAndProceed');
+const validateAndProceed = require('../middleware/validateAndProceed');
 
 const validatePostOrder = [
   body('books').isArray().withMessage('상품 리스트는 배열이어야 함'),
@@ -15,7 +15,6 @@ const validatePostOrder = [
   body('payment').trim().notEmpty().withMessage('지불 방법은 필수 입력'),
   body('total_price').isNumeric().withMessage('총 금액은 숫자이어야 함'),
   body('total_quantity').isNumeric().withMessage('총 수량은 숫자이어야 함'),
-  body('user_id').isNumeric().withMessage('유저 아이디는 숫자이어야 함'),
   body('first_book_title')
     .trim()
     .notEmpty()

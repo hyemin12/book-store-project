@@ -11,11 +11,20 @@ const {
   getOrders,
   getOrderDetail
 } = require('../controller/ordersController');
+const ensureAuthorization = require('../middleware/decodedJWT');
 
 router.use(express.json());
 
-router.route('/').post(validatePostOrder, postOrder).get(getOrders);
+router
+  .route('/')
+  .post(validatePostOrder, ensureAuthorization(), postOrder)
+  .get(ensureAuthorization(), getOrders);
 
-router.get('/:order_id', validateGetOrderDetail, getOrderDetail);
+router.get(
+  '/:order_id',
+  validateGetOrderDetail,
+  ensureAuthorization(),
+  getOrderDetail
+);
 
 module.exports = router;
