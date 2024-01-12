@@ -4,7 +4,7 @@ const router = express.Router();
 const { validatePostOrder, validateGetOrderDetail } = require('../validators/orders');
 
 const { postOrder, getOrders, getOrderDetail } = require('../controller/ordersController');
-const ensureAuthorization = require('../middleware/decodedJWT');
+const ensureAuthorization = require('../middleware/ensureAuthorization');
 
 router.use(express.json());
 

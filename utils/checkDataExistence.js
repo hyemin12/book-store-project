@@ -15,6 +15,4 @@ const checkDataExistence = async (sql, values = []) => {
   }
 };
 
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQG1haWwuY29tIiwiaWQiOjQsImlhdCI6MTcwNTAzOTExOCwiZXhwIjoxNzA1MDQyNzE4LCJpc3MiOiJNeUJvb2tTdG9yZSJ9.NfdSs1vy0DggGXBQ1gZgR1bz9aXSUXb6q7Ox9ZgowB4
-
 module.exports = checkDataExistence;

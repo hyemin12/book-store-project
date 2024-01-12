@@ -23,7 +23,7 @@ const errors = {
   },
   ER_NO_TOKEN: {
     code: StatusCodes.UNAUTHORIZED,
-    message: '토큰 않음'
+    message: '토큰 없음'
   },
   ER_SESSION_EXPIRED: {
     code: StatusCodes.UNAUTHORIZED,
