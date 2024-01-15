@@ -67,8 +67,7 @@ const loginUser = async (req, res) => {
       throwError('ER_NOT_FOUND_EMAIL');
     }
 
-    const [rows] = await pool.execute(sql, values);
-    const [loginUser] = rows;
+    const [[loginUser]] = await pool.execute(sql, values);
 
     // 비밀번호 검증
     const matchPassword = await bcrypt.compare(password, loginUser.password);
