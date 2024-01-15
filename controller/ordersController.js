@@ -16,7 +16,7 @@ const checkDeliveryExistenceQuery = 'SELECT * from delivery WHERE recipient = ? 
  * 4. 장바구니 목록에서 주문한 도서 목록 삭제하기
  */
 /** 주문하기 (결제 하기) */
-const postOrder = async (req, res, next) => {
+const postOrder = async (req, res) => {
   const { books, delivery, payment, totalPrice, totalQuantity, firstBookTitle } = camelcaseKeys(req.body);
 
   const userId = req.user?.id;

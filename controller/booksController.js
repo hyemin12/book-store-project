@@ -29,10 +29,8 @@ const getBooks = async (req, res) => {
   }
 
   // 페이징 추가
-  const requestedLimit = limit || 8;
-  const requestedPage = page || 1;
-  const offset = requestedLimit * (requestedPage - 1);
-  sql += ` LIMIT ${requestedLimit} OFFSET ${offset}`;
+  const { computedLimit, offset } = calcPagination(page, limit);
+  sql += ` ${computedLimit} OFFSET ${offset}`;
 
   try {
     const [rows] = await pool.execute(sql, values);
@@ -69,14 +67,12 @@ const getIndividualBook = async (req, res) => {
 const getSearchBooks = async (req, res, next) => {
   const { page, limit, query } = req.query;
 
-  const requestedPage = page || 1;
-  const requestedLimit = limit || 6;
-  const offset = requestedLimit * (requestedPage - 1);
+  const { computedLimit, offset } = calcPagination(page, limit);
 
   const sql = `
     SELECT * FROM books 
     WHERE title LIKE CONCAT("%", ?, "%") 
-    LIMIT ${requestedLimit} OFFSET ${offset}`;
+    LIMIT ${computedLimit} OFFSET ${offset}`;
 
   try {
     const [rows] = await pool.execute(sql, [query]);
@@ -108,6 +104,18 @@ const buildBaseBookQuery = (userId) => {
   }
 
   return sql;
+};
+
+/** 페이지네이션 계산 함수
+ * @param {number} page - 현재 페이지
+ * @param {number} limit - 페이지당 아이템 수
+ * @return {object} - 계산된 limit과 offset을 포함하는 객체*/
+const calcPagination = (page, limit) => {
+  const computedPage = page || 1;
+  const computedLimit = limit || 6;
+  const offset = computedLimit * (computedPage - 1);
+
+  return { computedLimit, offset };
 };
 
 module.exports = {
