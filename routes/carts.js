@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const { addToCart, deleteCartsItem, getCartsItems, updateCartItemCount } = require('../controller/cartController');
-
 const {
   validateAddToCart,
   validateGetCartsItems,
@@ -10,8 +9,6 @@ const {
   validateUpdateCartItemCount
 } = require('../validators/carts');
 const ensureAuthorization = require('../middleware/decodedJWT');
-
-router.use(express.json());
 
 router
   .route('/')
