@@ -8,7 +8,7 @@ const {
   validateDeleteCartsItem,
   validateUpdateCartItemCount
 } = require('../validators/carts');
-const ensureAuthorization = require('../middleware/decodedJWT');
+const ensureAuthorization = require('../middleware/ensureAuthorization');
 
 router
   .route('/')

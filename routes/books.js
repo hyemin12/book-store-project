@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { getBooks, getSearchBooks, getIndividualBook } = require('../controller/booksController');
 const { validatesGetBooks, validatesSearchBooks, validatesBook } = require('../validators/books');
-const ensureAuthorization = require('../middleware/decodedJWT');
+const ensureAuthorization = require('../middleware/ensureAuthorization');
 
 router.get('/', validatesGetBooks, ensureAuthorization(false), getBooks);
 router.get('/search', validatesSearchBooks, ensureAuthorization(false), getSearchBooks);

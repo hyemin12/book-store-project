@@ -5,9 +5,7 @@ const { joinUser, loginUser, requestResetPassword, resetPassword } = require('..
 const { validatesLoginAndReset, validatesJoin, validatesEmail } = require('../validators/users');
 
 router.post('/join', validatesJoin, joinUser);
-
 router.post('/login', validatesLoginAndReset, loginUser);
-
 router.route('/reset').post(validatesEmail, requestResetPassword).put(validatesLoginAndReset, resetPassword);
 
 module.exports = router;
