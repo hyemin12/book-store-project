@@ -4,6 +4,9 @@ const pool = require('../mysql');
 
 const { handleError } = require('../utils/handleError');
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 6;
+
 /** 도서 조회
  * @param category_id: 카테고리별로 조회할 때 사용
  * @param new: 신간을 조회할 때 사용
@@ -43,13 +46,24 @@ const getBooks = async (req, res) => {
   }
 };
 
-/** 개별 도서 조회 */
+/** 개별 도서 조회
+ * @return {도서 정보 상세 내역, reviews: 도서 리뷰 목록, bestSeller: 베스트 목록}
+ */
 const getIndividualBook = async (req, res) => {
   const { bookId } = camelcaseKeys(req.params);
 
   const userId = req.user?.id;
 
   let sql = buildBaseBookQuery(userId);
+  const reviewsSql = `SELECT users.email AS author, text, rate, reviews.created_at FROM reviews 
+    LEFT JOIN users ON reviews.user_id = users.id 
+    WHERE book_id = ?`;
+  const bestBooksSql = `
+    SELECT *,
+    (SELECT count(*) FROM likes WHERE likes.book_id = books.id) AS likes
+    FROM books 
+    WHERE category_id = ? AND id != ?
+    ORDER BY likes DESC`;
   const values = [bookId];
 
   if (userId) {
@@ -59,15 +73,25 @@ const getIndividualBook = async (req, res) => {
   sql += ' WHERE books.id = ?';
 
   try {
-    const [rows] = await pool.execute(sql, values);
-    res.status(StatusCodes.OK).send(rows);
+    const [[rows]] = await pool.execute(sql, values);
+
+    const [reviews] = await pool.execute(reviewsSql, values);
+
+    const categoryId = rows.category_id;
+    const valuesBestBooks = [categoryId, bookId];
+
+    const [bestSeller] = await pool.execute(bestBooksSql, valuesBestBooks);
+    const result = { ...rows, reviews, bestSeller };
+    res.status(StatusCodes.OK).send(result);
   } catch (err) {
     handleError(res, err);
   }
 };
 
-/** 도서 검색 */
-const getSearchBooks = async (req, res, next) => {
+/** 도서 검색
+ * @returns {list: 도서목록, pagenation: {current_page:현재페이지, total_count: 전체 아이템 수}}
+ */
+const getSearchBooks = async (req, res) => {
   const { page, limit, query } = req.query;
 
   const { computedLimit, computedPage, offset } = calcPagination(page, limit);
@@ -91,24 +115,22 @@ const getSearchBooks = async (req, res, next) => {
  *  userId가 있으면 유저가 좋아요를 클릭했는지 여부를 확인하고 반환
  */
 const buildBaseBookQuery = (userId) => {
-  let sql = `
+  const baseQuery = `
     SELECT SQL_CALC_FOUND_ROWS books.*,
     (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
     FROM books
     LEFT JOIN category ON category.category_id = books.category_id
   `;
 
-  if (userId) {
-    sql = `
+  const userQuery = `
     SELECT SQL_CALC_FOUND_ROWS books.*,
     (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
     (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
     FROM books
     LEFT JOIN category ON category.category_id = books.category_id
     `;
-  }
 
-  return sql;
+  return userId ? userQuery : baseQuery;
 };
 
 /** 페이지네이션 계산 함수
@@ -116,8 +138,8 @@ const buildBaseBookQuery = (userId) => {
  * @param {number} limit - 페이지당 아이템 수
  * @return {object} - 계산된 limit과 offset을 포함하는 객체*/
 const calcPagination = (page, limit) => {
-  const computedPage = page || 1;
-  const computedLimit = limit || 6;
+  const computedPage = page || DEFAULT_PAGE;
+  const computedLimit = limit || DEFAULT_LIMIT;
   const offset = computedLimit * (computedPage - 1);
 
   return { computedLimit, computedPage, offset };
