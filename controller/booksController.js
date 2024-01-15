@@ -29,13 +29,16 @@ const getBooks = async (req, res) => {
   }
 
   // 페이징 추가
-  const { computedLimit, offset } = calcPagination(page, limit);
+  const { computedLimit, computedPage, offset } = calcPagination(page, limit);
   sql += ` ${computedLimit} OFFSET ${offset}`;
 
   try {
     const [rows] = await pool.execute(sql, values);
-    res.status(StatusCodes.OK).send({ lists: rows });
+    const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
+    const result = { lists: rows, pagenation: { current_page: computedPage, total_count: totalCount.counts } };
+    res.status(StatusCodes.OK).send(result);
   } catch (err) {
+    console.log(err);
     handleError(res, err);
   }
 };
@@ -67,7 +70,7 @@ const getIndividualBook = async (req, res) => {
 const getSearchBooks = async (req, res, next) => {
   const { page, limit, query } = req.query;
 
-  const { computedLimit, offset } = calcPagination(page, limit);
+  const { computedLimit, computedPage, offset } = calcPagination(page, limit);
 
   const sql = `
     SELECT * FROM books 
@@ -76,7 +79,9 @@ const getSearchBooks = async (req, res, next) => {
 
   try {
     const [rows] = await pool.execute(sql, [query]);
-    res.status(StatusCodes.OK).send({ lists: rows });
+    const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
+    const result = { lists: rows, pagenation: { current_page: computedPage, total_count: totalCount.counts } };
+    res.status(StatusCodes.OK).send(result);
   } catch (err) {
     handleError(res, err);
   }
@@ -87,7 +92,7 @@ const getSearchBooks = async (req, res, next) => {
  */
 const buildBaseBookQuery = (userId) => {
   let sql = `
-    SELECT books.*,
+    SELECT SQL_CALC_FOUND_ROWS books.*,
     (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
     FROM books
     LEFT JOIN category ON category.category_id = books.category_id
@@ -95,7 +100,7 @@ const buildBaseBookQuery = (userId) => {
 
   if (userId) {
     sql = `
-    SELECT books.*,
+    SELECT SQL_CALC_FOUND_ROWS books.*,
     (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
     (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
     FROM books
@@ -115,7 +120,7 @@ const calcPagination = (page, limit) => {
   const computedLimit = limit || 6;
   const offset = computedLimit * (computedPage - 1);
 
-  return { computedLimit, offset };
+  return { computedLimit, computedPage, offset };
 };
 
 module.exports = {
