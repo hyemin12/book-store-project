@@ -12,7 +12,7 @@ const postLike = async (req, res, next) => {
   const { bookId } = camelcaseKeys(req.params);
 
   try {
-    const userId = req.user?.id ?? undefined;
+    const userId = req.user?.id;
 
     const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
     const values = [userId, bookId];
@@ -40,7 +40,7 @@ const deleteLike = async (req, res, next) => {
   const { bookId } = camelcaseKeys(req.params);
 
   try {
-    const userId = req.user?.id ?? undefined;
+    const userId = req.user?.id;
 
     const sql = `
     DELETE FROM likes

@@ -13,7 +13,7 @@ const { handleError } = require('../utils/handleError');
 const getBooks = async (req, res) => {
   const { categoryId, new: fetchNewBooks, page, limit } = camelcaseKeys(req.query);
 
-  const userId = req.user?.id ?? undefined;
+  const userId = req.user?.id;
 
   let sql = buildBaseBookQuery(userId);
   const values = userId ? [userId] : [];
@@ -46,7 +46,7 @@ const getBooks = async (req, res) => {
 const getIndividualBook = async (req, res) => {
   const { bookId } = camelcaseKeys(req.params);
 
-  const userId = req.user?.id ?? undefined;
+  const userId = req.user?.id;
 
   let sql = buildBaseBookQuery(userId);
   const values = [bookId];
