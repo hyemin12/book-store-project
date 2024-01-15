@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
+
 const { postLike, deleteLike } = require('../controller/likesController');
 const { validateLikes } = require('../validators/likes');
 const ensureAuthorization = require('../middleware/ensureAuthorization');
-
-router.use(express.json());
 
 router
   .route('/:book_id')

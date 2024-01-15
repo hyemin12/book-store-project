@@ -17,10 +17,6 @@ const errors = {
     code: StatusCodes.BAD_REQUEST,
     message: 'SQL 구문 오류'
   },
-  ValidationError: {
-    code: StatusCodes.BAD_REQUEST,
-    message: '잘못된 요청'
-  },
   ER_NO_TOKEN: {
     code: StatusCodes.UNAUTHORIZED,
     message: '토큰 없음'
@@ -76,7 +72,7 @@ const errors = {
 };
 
 const handleError = (res, error) => {
-  const name = error.name ?? error;
+  const name = error.code ?? error.name ?? error;
 
   if (!name) {
     console.error(error);

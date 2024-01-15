@@ -19,7 +19,7 @@ const checkDeliveryExistenceQuery = 'SELECT * from delivery WHERE recipient = ? 
 const postOrder = async (req, res) => {
   const { books, delivery, payment, totalPrice, totalQuantity, firstBookTitle } = camelcaseKeys(req.body);
 
-  const userId = req.user?.id ?? undefined;
+  const userId = req.user?.id;
 
   const sqlDelivery = `
     INSERT INTO delivery 
@@ -98,7 +98,7 @@ const postOrder = async (req, res) => {
 
 /** 주문 내역 조회 */
 const getOrders = async (req, res) => {
-  const userId = req.user?.id ?? undefined;
+  const userId = req.user?.id;
 
   const sql = `
     SELECT orders.id, created_at, recipient, address, contact, total_quantity, total_price

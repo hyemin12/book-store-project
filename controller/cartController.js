@@ -15,7 +15,7 @@ const addToCart = async (req, res) => {
   const { bookId, quantity } = camelcaseKeys(req.body);
 
   try {
-    const userId = req.user?.id ?? undefined;
+    const userId = req.user?.id;
 
     // Step 1: 도서가 DB에 존재하는지 확인
     const { isExist: isExistBook } = await checkDataExistence(checkBookExistenceQuery, [bookId]);
@@ -69,7 +69,7 @@ const getCartsItems = async (req, res) => {
   const { selected } = req.body;
 
   try {
-    const userId = req.user?.id ?? undefined;
+    const userId = req.user?.id;
 
     let sql = `SELECT 
       cartItems.id, book_id, title, summary, price, quantity 
