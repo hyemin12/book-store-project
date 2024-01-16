@@ -17,16 +17,17 @@ const DEFAULT_LIMIT = 6;
 const getBooks = async (req, res) => {
   const { categoryId, new: fetchNewBooks, page, limit } = camelcaseKeys(req.query);
   const userId = req.user?.id;
+
   const { computedLimit, computedPage, offset } = calcPagination(page, limit);
 
   try {
-    const { books, totalCount } = findBooks({ userId, limit: computedLimit, offset, fetchNewBooks, categoryId });
+    const { books, totalCount } = await findBooks({ userId, limit: computedLimit, offset, fetchNewBooks, categoryId });
 
     const result = {
       lists: books,
       pagenation: {
         current_page: computedPage,
-        total_count: totalCount.counts
+        total_count: totalCount
       }
     };
     res.status(StatusCodes.OK).send(result);
@@ -40,11 +41,10 @@ const getBooks = async (req, res) => {
  * @return {도서 정보 상세 내역, reviews: 도서 리뷰 목록, bestSeller: 베스트 목록}
  */
 const getIndividualBook = async (req, res) => {
-  const { bookId } = camelcaseKeys(req.params);
-
-  const userId = req.user?.id;
-
   try {
+    const { bookId } = camelcaseKeys(req.params);
+    const userId = req.user?.id;
+
     const book = await findBook({ bookId, userId });
     const categoryId = book.category_id;
 
@@ -63,18 +63,18 @@ const getIndividualBook = async (req, res) => {
  * @returns {list: 도서목록, pagenation: {current_page:현재페이지, total_count: 전체 아이템 수}}
  */
 const getSearchBooks = async (req, res) => {
-  const { page, limit, query } = req.query;
-
-  const { computedLimit, computedPage, offset } = calcPagination(page, limit);
-
   try {
+    const { page, limit, query } = req.query;
+
+    const { computedLimit, computedPage, offset } = calcPagination(page, limit);
+
     const { books, totalCount } = await findQuery({ query, limit: computedLimit, offset });
 
     const result = {
       lists: books,
       pagenation: {
         current_page: computedPage,
-        total_count: totalCount.counts
+        total_count: totalCount
       }
     };
     res.status(StatusCodes.OK).send(result);
