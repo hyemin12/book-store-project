@@ -1,5 +1,6 @@
 const pool = require('../mysql');
 const checkDataExistence = require('../utils/checkDataExistence');
+const { getConnection, releaseConnection } = require('../utils/connectionUtil');
 const { throwError } = require('../utils/handleError');
 
 const checkCartItemExistence = async ({ userId, bookId }) => {
@@ -57,11 +58,18 @@ const updateCartItem = async () => {
   }
 };
 
-const deleteCartItems = async ({ id }) => {
+const deleteCartItems = async ({ id, idArr, count, conn }) => {
   try {
-    const sql = 'DELETE FROM cartItems WHERE id = ?';
-    const values = [id];
-    const [rows] = await pool.execute(sql, values);
+    const sql = `
+      DELETE FROM cartItems
+      WHERE id IN (?${',?'.repeat(count)})
+    `;
+    const values = count ? idArr : [id];
+
+    const connection = getConnection();
+    const [rows] = await connection.execute(sql, values);
+    releaseConnection();
+
     return rows.affectedRows > 0;
   } catch (error) {
     throwError('장바구니 아이템 삭제 오류');
