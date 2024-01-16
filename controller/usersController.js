@@ -1,10 +1,9 @@
 const { StatusCodes } = require('http-status-codes');
-const pool = require('../mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const { handleError, throwError } = require('../utils/handleError');
-const checkDataExistence = require('../utils/checkDataExistence');
+const { checkEmailExistence, createUser, findUser, updateUserPassword } = require('../model/users');
 
 // ENV KEY
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
@@ -24,30 +23,24 @@ const hashPassword = async (password) => {
   }
 };
 
-const checkEmailExistenceQuery = 'SELECT * FROM users WHERE email = ?';
-
 /** 회원가입 */
 const joinUser = async (req, res) => {
   const { email, password } = req.body;
   const hashedPassword = await hashPassword(password);
 
-  const sql = 'INSERT INTO users (email, password) VALUES (?, ?)';
-  const values = [email, hashedPassword];
-
   try {
-    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, [email]);
-
+    const isExist = await checkEmailExistence({ email });
     if (isExist) {
       throwError('ER_ALREADY_EXISTS_EMAIL');
     }
 
-    const [rows] = await pool.execute(sql, values);
+    const result = await createUser({ email, password: hashedPassword });
 
-    if (rows.affectedRows > 0) {
-      res.status(StatusCodes.CREATED).send({ message: '회원가입 완료' });
-    } else {
-      throwError('ER_UNPROCESSABLE_ENTITY');
+    if (!result) {
+      throwError('회원가입 실패');
     }
+
+    res.status(StatusCodes.CREATED).send({ message: '회원가입 완료' });
   } catch (err) {
     handleError(res, err);
   }
@@ -57,28 +50,26 @@ const joinUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  const sql = 'SELECT * FROM users WHERE email = ?';
-  const values = [email];
-
   try {
-    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, values);
-
+    const isExist = await checkEmailExistence({ email });
     if (!isExist) {
       throwError('ER_NOT_FOUND_EMAIL');
     }
 
-    const [[loginUser]] = await pool.execute(sql, values);
+    const loginUser = await findUser({ email });
+    if (!loginUser) {
+      throwError('일치하는 회원 없음');
+    }
 
     // 비밀번호 검증
     const matchPassword = await bcrypt.compare(password, loginUser.password);
-
     if (!matchPassword) {
       throwError('ER_NOT_MATCHED_PASSWORD');
     }
 
     // 토큰 생성
     const token = jwt.sign({ email: loginUser.email, id: loginUser.id }, TOKEN_PRIVATE_KEY, {
-      expiresIn: '15m',
+      expiresIn: '30m',
       issuer: TOKEN_ISSUER
     });
 
@@ -97,14 +88,11 @@ const loginUser = async (req, res) => {
 };
 
 /** 비밀번호 초기화 요청 */
-const requestResetPassword = async (req, res, next) => {
+const requestResetPassword = async (req, res) => {
   const { email } = req.body;
 
-  const values = [email];
-
   try {
-    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, values);
-
+    const isExist = await checkEmailExistence({ email });
     if (!isExist) {
       throwError('ER_NOT_FOUND_EMAIL');
     }
@@ -116,27 +104,21 @@ const requestResetPassword = async (req, res, next) => {
 };
 
 /** 비밀번호 초기화 */
-const resetPassword = async (req, res, next) => {
+const resetPassword = async (req, res) => {
   const { email, password } = req.body;
   const hashedPassword = await hashPassword(password);
 
   try {
-    const { isExist } = await checkDataExistence(checkEmailExistenceQuery, [email]);
-
+    const isExist = await checkEmailExistence({ email });
     if (!isExist) {
       throwError('ER_NOT_FOUND_EMAIL');
     }
 
-    const sql = 'UPDATE users SET password = ? WHERE email = ?';
-    const values = [hashedPassword, email];
-
-    const [rows] = await pool.execute(sql, values);
-
-    if (rows.affectedRows > 0) {
-      res.status(StatusCodes.OK).send({ message: '비밀번호 초기화 성공' });
-    } else {
-      throwError('ER_UNPROCESSABLE_ENTITY');
+    const result = await updateUserPassword({ email, password: hashedPassword });
+    if (!result) {
+      throwError('비밀번호 초기화 오류');
     }
+    res.status(StatusCodes.OK).send({ message: '비밀번호 초기화 성공' });
   } catch (err) {
     handleError(res, err);
   }
