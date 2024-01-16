@@ -25,7 +25,6 @@ const buildBaseBookQuery = (userId) => {
 const findBooks = async ({ categoryId, fetchNewBooks, userId, limit, offset }) => {
   let sql = buildBaseBookQuery(userId);
   const values = userId ? [userId] : [];
-
   if (categoryId) {
     sql += ' WHERE books.category_id = ?';
     values.push(categoryId);
@@ -34,13 +33,15 @@ const findBooks = async ({ categoryId, fetchNewBooks, userId, limit, offset }) =
     sql += categoryId ? ' AND' : ' WHERE';
     sql += ' published_at BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()';
   }
-  sql += ` ${limit} OFFSET ${offset}`;
+  sql += ` LIMIT ${limit} OFFSET ${offset}`;
 
   try {
     const [books] = await pool.execute(sql, values);
     const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
-    return { books, totalCount };
+
+    return { books, totalCount: totalCount.counts };
   } catch (error) {
+    console.log(error);
     throwError('도서 조회 오류');
   }
 };
@@ -103,7 +104,8 @@ const findQuery = async ({ query, limit, offset }) => {
   try {
     const [books] = await pool.execute(sql, values);
     const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
-    return { books, totalCount };
+
+    return { books, totalCount: totalCount.counts };
   } catch (error) {
     throwError('베스트 셀러 조회 오류');
   }
