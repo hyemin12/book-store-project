@@ -78,7 +78,7 @@ const loginUser = async (req, res) => {
 
     // 토큰 생성
     const token = jwt.sign({ email: loginUser.email, id: loginUser.id }, TOKEN_PRIVATE_KEY, {
-      expiresIn: '1h',
+      expiresIn: '15m',
       issuer: TOKEN_ISSUER
     });
 
