@@ -66,9 +66,9 @@ const deleteCartItems = async ({ id, idArr, count, conn }) => {
     `;
     const values = count ? idArr : [id];
 
-    const connection = getConnection();
+    const connection = getConnection(conn);
     const [rows] = await connection.execute(sql, values);
-    releaseConnection();
+    releaseConnection(connection, conn);
 
     return rows.affectedRows > 0;
   } catch (error) {

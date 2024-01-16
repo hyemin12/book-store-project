@@ -28,9 +28,9 @@ const createDelivery = async ({ recipient, address, contact, conn }) => {
   `;
     const values = [recipient, address, contact];
 
-    const connection = getConnection();
+    const connection = getConnection(conn);
     const [rows] = await connection.execute(sql, values);
-    releaseConnection();
+    releaseConnection(connection, conn);
 
     return { result: rows.affectedRows > 0, dbDeliveryId: rows.insertId };
   } catch (error) {
@@ -47,9 +47,9 @@ const createOrder = async ({ bookTitle, totalQuantity, totalPrice, payment, deli
     `;
     const values = [bookTitle, totalQuantity, totalPrice, payment, deliveryId, userId];
 
-    const connection = getConnection();
+    const connection = getConnection(conn);
     const [rows] = await connection.execute(sql, values);
-    releaseConnection();
+    releaseConnection(connection, conn);
 
     return { result: rows.affectedRows > 0, orderId: rows.insertId };
   } catch (error) {
@@ -65,9 +65,9 @@ const createOrderDetails = async ({ count, values, conn }) => {
       VALUES (?,?,?)${', (?,?,?)'.repeat(count)}
     `;
 
-    const connection = getConnection();
+    const connection = getConnection(conn);
     const [rows] = await connection.execute(sql, values);
-    releaseConnection();
+    releaseConnection(connection, conn);
 
     return rows.affectedRows > 0;
   } catch (error) {
