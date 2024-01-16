@@ -8,7 +8,7 @@ const checkDataExistence = require('../utils/checkDataExistence');
 const checkBookExistenceQuery = 'SELECT * FROM books WHERE id = ?';
 const checkCartItemExistenceQuery = 'SELECT * FROM cartItems WHERE user_id = ? AND book_id = ?';
 
-/** 장바구니에 아이템 추가
+/** 장바구니에 아이템 추가\
  * 이미 장바구니에 존재하는 아이템이라면 수량을 1 증가시킴
  */
 const addToCart = async (req, res) => {
@@ -62,7 +62,7 @@ const addToCart = async (req, res) => {
   }
 };
 
-/** 장바구니의 아이템 조회
+/** 장바구니의 아이템 조회 \
  * selected: 선택된 아이템의 목록
  */
 const getCartsItems = async (req, res) => {
