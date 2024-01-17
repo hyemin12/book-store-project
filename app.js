@@ -1,3 +1,4 @@
+const errorHandler = require('./middleware/errorHandler');
 const express = require('express');
 const app = express();
 const dotenv = require('dotenv');
@@ -26,3 +27,6 @@ app.use('/carts', cartsRouter);
 app.use('/orders', ordersRouter);
 app.use('/likes', likesRouter);
 app.use('/faker', fakerRouter);
+
+// error hanlder
+app.use(errorHandler);

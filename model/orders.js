@@ -1,7 +1,7 @@
 const pool = require('../mysql');
 const checkDataExistence = require('../utils/checkDataExistence');
 const { getConnection, releaseConnection } = require('../utils/connectionUtil');
-const { throwError } = require('../utils/handleError');
+const { throwError } = require('../utils/errors');
 
 const checkDeliveryExistence = async ({ recipient, address, contact, conn }) => {
   try {
@@ -20,92 +20,72 @@ const checkDeliveryExistence = async ({ recipient, address, contact, conn }) => 
 };
 
 const createDelivery = async ({ recipient, address, contact, conn }) => {
-  try {
-    const sql = `
+  const sql = `
     INSERT INTO delivery 
     (recipient,address,contact) 
     VALUES (?,?,?)
   `;
-    const values = [recipient, address, contact];
+  const values = [recipient, address, contact];
 
-    const connection = getConnection(conn);
-    const [rows] = await connection.execute(sql, values);
-    releaseConnection(connection, conn);
+  const connection = getConnection(conn);
+  const [rows] = await connection.execute(sql, values);
+  releaseConnection(connection, conn);
 
-    return { result: rows.affectedRows > 0, dbDeliveryId: rows.insertId };
-  } catch (error) {
-    throwError('배송정보 추가 실패');
-  }
+  return { result: rows.affectedRows > 0, dbDeliveryId: rows.insertId };
 };
 
 const createOrder = async ({ bookTitle, totalQuantity, totalPrice, payment, deliveryId, userId, conn }) => {
-  try {
-    const sql = `
+  const sql = `
       INSERT INTO orders
       (book_title, total_quantity, total_price, payment, delivery_id, user_id)
       VALUES (?,?,?,?,?,?)
     `;
-    const values = [bookTitle, totalQuantity, totalPrice, payment, deliveryId, userId];
+  const values = [bookTitle, totalQuantity, totalPrice, payment, deliveryId, userId];
 
-    const connection = getConnection(conn);
-    const [rows] = await connection.execute(sql, values);
-    releaseConnection(connection, conn);
+  const connection = getConnection(conn);
+  const [rows] = await connection.execute(sql, values);
+  releaseConnection(connection, conn);
 
-    return { result: rows.affectedRows > 0, orderId: rows.insertId };
-  } catch (error) {
-    throwError('주문 내역 추가 실패');
-  }
+  return { result: rows.affectedRows > 0, orderId: rows.insertId };
 };
 
 const createOrderDetails = async ({ count, values, conn }) => {
-  try {
-    const sql = `
+  const sql = `
       INSERT INTO orderedbook
       (order_id, book_id, quantity)
       VALUES (?,?,?)${', (?,?,?)'.repeat(count)}
     `;
 
-    const connection = getConnection(conn);
-    const [rows] = await connection.execute(sql, values);
-    releaseConnection(connection, conn);
+  const connection = getConnection(conn);
+  const [rows] = await connection.execute(sql, values);
+  releaseConnection(connection, conn);
 
-    return rows.affectedRows > 0;
-  } catch (error) {
-    throwError('주문 아이템 목록 추가 실패');
-  }
+  return rows.affectedRows > 0;
 };
 
 const findOrderList = async ({ userId }) => {
-  try {
-    const sql = `
+  const sql = `
       SELECT orders.id, created_at, recipient, address, contact, total_quantity, total_price
       FROM orders 
       LEFT JOIN delivery ON orders.delivery_id = delivery.id
       WHERE user_id = ? 
     `;
-    const values = [userId];
+  const values = [userId];
 
-    const [rows] = await pool.execute(sql, values);
-    return rows;
-  } catch (error) {
-    throwError('장바구니 조회 오류');
-  }
+  const [rows] = await pool.execute(sql, values);
+  return rows;
 };
 const findOrderDetails = async ({ orderId }) => {
-  try {
-    const sql = `
+  const sql = `
     SELECT book_id, title AS book_title, author, price, quantity
     FROM orderedbook
     LEFT JOIN books ON orderedbook.book_id = books.id
     WHERE order_id = ? 
   `;
-    const values = [orderId];
+  const values = [orderId];
 
-    const [rows] = await connection.execute(sql, values);
-    return rows;
-  } catch (error) {
-    throwError('장바구니 상세 조회 오류');
-  }
+  const [rows] = await connection.execute(sql, values);
+  return rows;
 };
 
 module.exports = {

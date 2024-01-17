@@ -1,14 +1,11 @@
 const pool = require('../mysql');
-const { throwError } = require('../utils/handleError');
+const { throwError } = require('../utils/errors');
 
 const findAll = async () => {
-  try {
-    const sql = 'SELECT * FROM category';
-    const [rows] = await pool.execute(sql);
-    return rows;
-  } catch (error) {
-    throwError('카테고리 조회 오류');
-  }
+  const sql = 'SELECT * FROM category';
+  const [rows] = await pool.execute(sql);
+
+  return rows;
 };
 
 module.exports = { findAll };

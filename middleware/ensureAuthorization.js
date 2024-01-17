@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const { throwError, handleError } = require('../utils/handleError');
+const { UnauthorizedError, ServerError, UnProcessableError, NotFoundError } = require('../utils/errors');
 const checkDataExistence = require('../utils/checkDataExistence');
 
 const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
@@ -10,9 +10,12 @@ const decodedJWT = (token) => {
   try {
     return jwt.verify(token, TOKEN_PRIVATE_KEY);
   } catch (err) {
-    if (err instanceof jwt.TokenExpiredError) throwError('ER_SESSION_EXPIRED');
-    if (err instanceof jwt.JsonWebTokenError) throwError('ER_INVALID_TOKEN');
-    throwError('ER_UNKNOWN');
+    if (err instanceof jwt.TokenExpiredError)
+      throw new UnauthorizedError('로그인(인증) 세션이 만료', 'ER_SESSION_EXPIRED');
+
+    if (err instanceof jwt.JsonWebTokenError) throw new UnauthorizedError('유효하지 않은 토큰', 'ER_INVALID_TOKEN');
+
+    throw new ServerError();
   }
 };
 
@@ -24,26 +27,25 @@ const checkUserExistenceQuery = 'SELECT * from users WHERE id = ?';
 const ensureAuthorization =
   (requireToken = true) =>
   async (req, res, next) => {
-    const token = req.headers['authorization'];
-
-    if (!token && requireToken) return handleError(res, 'ER_NO_TOKEN');
-
     try {
-      if (token) {
-        const decodedToken = await decodedJWT(token);
+      const token = req.headers['authorization'];
 
-        if (decodedToken.iss !== TOKEN_ISSUER) throwError(res, 'ER_INVALID_ISSUER');
+      if (!token && requireToken) throw new UnauthorizedError('토큰 없음', 'ER_NO_TOKEN');
+
+      if (token) {
+        const decodedToken = decodedJWT(token);
+
+        if (decodedToken.iss !== TOKEN_ISSUER) throw new UnProcessableError('잘못된 토큰 발급자', 'ER_INVALID_ISSUER');
 
         const { isExist } = await checkDataExistence(checkUserExistenceQuery, [decodedToken.id]);
-
         if (!isExist) {
-          throwError(res, 'ER_INVALID_USER');
+          throw new NotFoundError('사용자를 찾을 수 없음', 'ER_NOT_FOUND_USER');
         }
 
         req.user = decodedToken;
       }
     } catch (err) {
-      return handleError(res, err);
+      next(err);
     }
     next();
   };
