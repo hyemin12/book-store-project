@@ -1,5 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const camelcaseKeys = require('camelcase-keys');
+const asyncHandler = require('express-async-handler');
 const pool = require('../mysql');
 
 const { handleError, throwError } = require('../utils/handleError');
@@ -22,7 +23,7 @@ const { deleteCartItems } = require('../model/carts');
  * 4. 장바구니 목록에서 주문한 도서 목록 삭제하기
  */
 /** 주문하기 (결제 하기) */
-const postOrder = async (req, res) => {
+const postOrder = async (req, res, next) => {
   try {
     const { books, delivery, payment, totalPrice, totalQuantity, firstBookTitle } = camelcaseKeys(req.body);
     const userId = req.user?.id;
@@ -81,33 +82,26 @@ const postOrder = async (req, res) => {
     res.status(StatusCodes.OK).send({ message: '결제 성공 및 장바구니 아이템 삭제' });
   } catch (err) {
     await conn.rollback();
-    handleError(res, err);
+    next(err);
   } finally {
     if (conn) conn.release();
   }
 };
 
 /** 주문 내역 조회 */
-const getOrders = async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const lists = await findOrderList({ userId });
-    res.status(StatusCodes.OK).send({ lists });
-  } catch (err) {
-    handleError(res, err);
-  }
-};
+const getOrders = asyncHandler(async (req, res) => {
+  const userId = req.user?.id;
+  const lists = await findOrderList({ userId });
+
+  res.status(StatusCodes.OK).send({ lists });
+});
 
 /** 주문 내역 상세 조회 */
-const getOrderDetail = async (req, res) => {
-  try {
-    const { orderId } = camelcaseKeys(req.params);
+const getOrderDetail = asyncHandler(async (req, res) => {
+  const { orderId } = camelcaseKeys(req.params);
 
-    const lists = await findOrderDetails({ orderId });
-    res.status(StatusCodes.OK).send({ lists });
-  } catch (err) {
-    handleError(res, err);
-  }
-};
+  const lists = await findOrderDetails({ orderId });
+  res.status(StatusCodes.OK).send({ lists });
+});
 
 module.exports = { postOrder, getOrders, getOrderDetail };

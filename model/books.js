@@ -1,5 +1,5 @@
 const pool = require('../mysql');
-const { throwError } = require('../utils/handleError');
+
 /** books의 기본 쿼리를 리턴하는 함수
  *  userId가 있으면 유저가 좋아요를 클릭했는지 여부를 확인하고 반환
  */
@@ -25,6 +25,7 @@ const buildBaseBookQuery = (userId) => {
 const findBooks = async ({ categoryId, fetchNewBooks, userId, limit, offset }) => {
   let sql = buildBaseBookQuery(userId);
   const values = userId ? [userId] : [];
+
   if (categoryId) {
     sql += ' WHERE books.category_id = ?';
     values.push(categoryId);
@@ -35,15 +36,10 @@ const findBooks = async ({ categoryId, fetchNewBooks, userId, limit, offset }) =
   }
   sql += ` LIMIT ${limit} OFFSET ${offset}`;
 
-  try {
-    const [books] = await pool.execute(sql, values);
-    const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
+  const [books] = await pool.execute(sql, values);
+  const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
 
-    return { books, totalCount: totalCount.counts };
-  } catch (error) {
-    console.log(error);
-    throwError('도서 조회 오류');
-  }
+  return { books, totalCount: totalCount.counts };
 };
 
 const findBook = async ({ userId, bookId }) => {
@@ -52,12 +48,8 @@ const findBook = async ({ userId, bookId }) => {
 
   const values = userId ? [userId, bookId] : [bookId];
 
-  try {
-    const [[book]] = await pool.execute(sql, values);
-    return book;
-  } catch (error) {
-    throwError('개별 도서 조회 오류');
-  }
+  const [[book]] = await pool.execute(sql, values);
+  return book;
 };
 
 const findReviews = async ({ bookId }) => {
@@ -67,12 +59,9 @@ const findReviews = async ({ bookId }) => {
     LEFT JOIN users ON reviews.user_id = users.id 
     WHERE book_id = ?`;
   const values = [bookId];
-  try {
-    const [reviews] = await pool.execute(sql, values);
-    return reviews;
-  } catch (error) {
-    throwError('개별 도서 리뷰 오류');
-  }
+
+  const [reviews] = await pool.execute(sql, values);
+  return reviews;
 };
 
 const findBestSeller = async ({ categoryId, bookId }) => {
@@ -85,12 +74,8 @@ const findBestSeller = async ({ categoryId, bookId }) => {
     `;
   const values = [categoryId, bookId];
 
-  try {
-    const [bestSeller] = await pool.execute(sql, values);
-    return bestSeller;
-  } catch (error) {
-    throwError('베스트 셀러 조회 오류');
-  }
+  const [bestSeller] = await pool.execute(sql, values);
+  return bestSeller;
 };
 
 const findQuery = async ({ query, limit, offset }) => {
@@ -101,14 +86,10 @@ const findQuery = async ({ query, limit, offset }) => {
   `;
   const values = [query, limit, offset];
 
-  try {
-    const [books] = await pool.execute(sql, values);
-    const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
+  const [books] = await pool.execute(sql, values);
+  const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
 
-    return { books, totalCount: totalCount.counts };
-  } catch (error) {
-    throwError('베스트 셀러 조회 오류');
-  }
+  return { books, totalCount: totalCount.counts };
 };
 
 module.exports = { findBooks, findBook, findReviews, findBestSeller, findQuery };

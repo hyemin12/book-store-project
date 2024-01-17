@@ -10,6 +10,7 @@ const decodedJWT = (token) => {
   try {
     return jwt.verify(token, TOKEN_PRIVATE_KEY);
   } catch (err) {
+    // 오류 미들웨어로 넘어가야하는 코드
     if (err instanceof jwt.TokenExpiredError) throwError('ER_SESSION_EXPIRED');
     if (err instanceof jwt.JsonWebTokenError) throwError('ER_INVALID_TOKEN');
     throwError('ER_UNKNOWN');
@@ -30,12 +31,11 @@ const ensureAuthorization =
 
     try {
       if (token) {
-        const decodedToken = await decodedJWT(token);
+        const decodedToken = decodedJWT(token);
 
         if (decodedToken.iss !== TOKEN_ISSUER) throwError(res, 'ER_INVALID_ISSUER');
 
         const { isExist } = await checkDataExistence(checkUserExistenceQuery, [decodedToken.id]);
-
         if (!isExist) {
           throwError(res, 'ER_INVALID_USER');
         }
@@ -43,7 +43,7 @@ const ensureAuthorization =
         req.user = decodedToken;
       }
     } catch (err) {
-      return handleError(res, err);
+      next(err);
     }
     next();
   };

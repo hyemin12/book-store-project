@@ -11,31 +11,25 @@ const checkLikeExistence = async ({ userId, bookId }) => {
 };
 
 const addLike = async ({ userId, bookId }) => {
-  try {
-    const sql = `
+  const sql = `
       INSERT INTO likes (user_id, book_id) 
       VALUES (?, ?)
     `;
-    const values = [userId, bookId];
-    const [rows] = await pool.execute(sql, values);
-    return rows.affectedRows > 0;
-  } catch (error) {
-    throwError('좋아요 추가 실패');
-  }
+  const values = [userId, bookId];
+
+  const [rows] = await pool.execute(sql, values);
+  return rows.affectedRows > 0;
 };
 
 const deleteLikeDB = async ({ userId, bookId }) => {
-  try {
-    const sql = `
+  const sql = `
       DELETE FROM likes
       WHERE user_id = ? AND book_id = ?
     `;
-    const values = [userId, bookId];
-    const [rows] = await pool.execute(sql, values);
-    return rows.affectedRows > 0;
-  } catch (error) {
-    throwError('좋아요 삭제 실패');
-  }
+  const values = [userId, bookId];
+
+  const [rows] = await pool.execute(sql, values);
+  return rows.affectedRows > 0;
 };
 
 module.exports = { checkLikeExistence, addLike, deleteLikeDB };

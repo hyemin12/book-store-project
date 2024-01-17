@@ -12,6 +12,7 @@ const checkEmailExistence = async ({ email }) => {
 const createUser = async ({ email, password }) => {
   const sql = 'INSERT INTO users (email, password) VALUES (?, ?)';
   const values = [email, password];
+
   const [rows] = await pool.execute(sql, values);
   return rows.affectedRows > 0;
 };
@@ -19,6 +20,7 @@ const createUser = async ({ email, password }) => {
 const findUser = async ({ email }) => {
   const sql = 'SELECT * FROM users WHERE email = ?';
   const values = [email];
+
   const [[user]] = await pool.execute(sql, values);
   return user;
 };
@@ -26,6 +28,7 @@ const findUser = async ({ email }) => {
 const updateUserPassword = async ({ email, password }) => {
   const sql = 'UPDATE users SET password = ? WHERE email = ?';
   const values = [password, email];
+
   const [rows] = await pool.execute(sql, values);
   return rows.affectedRows > 0;
 };

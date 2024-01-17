@@ -1,16 +1,11 @@
 const { StatusCodes } = require('http-status-codes');
-const pool = require('../mysql');
+const asyncHandler = require('express-async-handler');
 
 const { findAll } = require('../model/category');
-const handleError = require('../utils/handleError');
 
-const getCategory = async (req, res) => {
-  try {
-    const lists = await findAll();
-    res.status(StatusCodes.OK).send({ lists });
-  } catch (err) {
-    handleError(res, err);
-  }
-};
+const getCategory = asyncHandler(async (req, res) => {
+  const lists = await findAll();
+  res.status(StatusCodes.OK).send({ lists });
+});
 
 module.exports = { getCategory };
