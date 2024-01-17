@@ -1,5 +1,5 @@
 const pool = require('../mysql');
-const { throwError } = require('../utils/handleError');
+const { throwError } = require('../utils/errors');
 
 const findAll = async () => {
   const sql = 'SELECT * FROM category';

@@ -1,5 +1,5 @@
 const { getConnection, releaseConnection } = require('./connectionUtil');
-const { throwError } = require('./handleError');
+const { ServerError } = require('./errors');
 
 /** 존재 여부 확인
  * @param sql 필수
@@ -12,9 +12,10 @@ const checkDataExistence = async (sql, values = [], conn) => {
     const connection = await getConnection(conn);
     const [rows] = await connection.execute(sql, values);
     releaseConnection(connection, conn);
+
     return { isExist: !!rows.length, rows };
   } catch (err) {
-    throwError('ER_DATABASE');
+    throw new ServerError('데이터베이스 조회 중 오류가 발생', 'ER_DATABASE');
   }
 };
 

@@ -3,7 +3,6 @@ const camelcaseKeys = require('camelcase-keys');
 const asyncHandler = require('express-async-handler');
 
 const { findBooks, findBook, findReviews, findBestSeller, findQuery } = require('../model/books');
-const { handleError } = require('../utils/handleError');
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 6;

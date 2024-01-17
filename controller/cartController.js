@@ -2,7 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 const camelcaseKeys = require('camelcase-keys');
 const asyncHandler = require('express-async-handler');
 
-const { throwError } = require('../utils/handleError');
+const { DatabaseError, NotFoundError } = require('../utils/errors');
 const {
   checkCartItemExistence,
   findCartItems,
@@ -20,7 +20,7 @@ const addToCart = asyncHandler(async (req, res) => {
   // Step 1: 도서가 DB에 존재하는지 확인
   const book = await findBook({ bookId });
   if (!book) {
-    throwError('DB에 존재하지 않는 값');
+    throw new NotFoundError();
   }
 
   // Step 2: 장바구니에 이미 담겨있는 아이템인지 확인
@@ -28,8 +28,9 @@ const addToCart = asyncHandler(async (req, res) => {
   if (isExist) {
     const result = await updateCartItem({ id: cartItemId, quantity: dbQuantity + 1 });
     if (!result) {
-      throwError('장바구니 수량 변경 오류');
+      throw new DatabaseError();
     }
+
     return res.status(StatusCodes.OK).send({
       message: `이미 존재하는 아이템!  수량 추가. 
           변경된 수량: ${addQuantity}`
@@ -39,7 +40,7 @@ const addToCart = asyncHandler(async (req, res) => {
   // Step 3: 장바구니에 담기
   const result = await createCartItem({ quantity, bookId, userId });
   if (!result) {
-    throwError('장바구니 아이템 담기 오류');
+    throw new DatabaseError();
   }
 
   res.status(StatusCodes.OK).send({ message: '장바구니에 추가완료 ' });
@@ -62,7 +63,7 @@ const deleteCartsItem = asyncHandler(async (req, res) => {
 
   const result = await deleteCartItems({ id });
   if (!result) {
-    throwError('장바구니 아이템 삭제 오류');
+    throw new DatabaseError();
   }
 });
 
@@ -73,7 +74,7 @@ const updateCartItemCount = asyncHandler(async (req, res) => {
 
   const result = await updateCartItem({ id, quantity });
   if (!result) {
-    throwError('장바구니 아이템 수량 변경 오류');
+    throw new DatabaseError();
   }
 
   res.status(StatusCodes.OK).send({ message: '수량 변경 성공' });

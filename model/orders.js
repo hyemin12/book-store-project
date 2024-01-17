@@ -1,7 +1,7 @@
 const pool = require('../mysql');
 const checkDataExistence = require('../utils/checkDataExistence');
 const { getConnection, releaseConnection } = require('../utils/connectionUtil');
-const { throwError } = require('../utils/handleError');
+const { throwError } = require('../utils/errors');
 
 const checkDeliveryExistence = async ({ recipient, address, contact, conn }) => {
   try {

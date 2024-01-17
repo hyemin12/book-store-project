@@ -3,7 +3,7 @@ const camelcaseKeys = require('camelcase-keys');
 const asyncHandler = require('express-async-handler');
 const pool = require('../mysql');
 
-const { handleError, throwError } = require('../utils/handleError');
+const { DatabaseError } = require('../utils/errors');
 const {
   checkDeliveryExistence,
   createDelivery,
@@ -35,13 +35,15 @@ const postOrder = async (req, res, next) => {
     // Step 1: Delivery 정보 확인 및 추가
     let deliveryId;
     const { isExist, dbDeliveryId } = await checkDeliveryExistence({ ...delivery, conn });
+
     if (isExist) {
       deliveryId = dbDeliveryId;
     } else {
       const { result, dbDeliveryId } = await createDelivery({ ...delivery });
       if (!result) {
-        throwError('배송정보 추가 실패');
+        throw new DatabaseError();
       }
+
       deliveryId = dbDeliveryId;
     }
 
@@ -56,7 +58,7 @@ const postOrder = async (req, res, next) => {
       conn
     });
     if (!step2Result || !orderId) {
-      throwError('주문 내역 추가 실패');
+      throw new DatabaseError();
     }
 
     const valuesOrderedBook = [];
@@ -70,14 +72,15 @@ const postOrder = async (req, res, next) => {
     const loopCount = books.length - 1;
     const step3Result = await createOrderDetails({ count: loopCount, values: valuesOrderedBook, conn });
     if (!step3Result) {
-      throwError('주문 아이템 목록 추가 실패');
+      throw new DatabaseError();
     }
 
     // Step 4: 장바구니 목록에서 주문한 도서 목록 삭제
     const step4Result = await deleteCartItems({ idArr: valuesDeleteCart, count: loopCount, conn });
     if (!step4Result) {
-      throwError('장바구니 아이템 삭제 오류');
+      throw new DatabaseError();
     }
+
     await conn.commit();
     res.status(StatusCodes.OK).send({ message: '결제 성공 및 장바구니 아이템 삭제' });
   } catch (err) {
