@@ -23,7 +23,7 @@ const getBooks = asyncHandler(async (req, res) => {
 
   const result = {
     lists: books,
-    pagenation: {
+    pagination: {
       current_page: computedPage,
       total_count: totalCount
     }
@@ -50,7 +50,7 @@ const getIndividualBook = asyncHandler(async (req, res) => {
 });
 
 /** 도서 검색
- * @returns {list: 도서목록, pagenation: {current_page:현재페이지, total_count: 전체 아이템 수}}
+ * @returns {list: 도서목록, pagination: {current_page:현재페이지, total_count: 전체 아이템 수}}
  */
 const getSearchBooks = asyncHandler(async (req, res) => {
   const { page, limit, query } = req.query;
@@ -61,7 +61,7 @@ const getSearchBooks = asyncHandler(async (req, res) => {
 
   const result = {
     lists: books,
-    pagenation: {
+    pagination: {
       current_page: computedPage,
       total_count: totalCount
     }
