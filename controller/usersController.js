@@ -1,35 +1,15 @@
 const { StatusCodes } = require('http-status-codes');
 const asyncHandler = require('express-async-handler');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
 const {
   ConflictError,
   DatabaseError,
   NotFoundError,
   NotFoundEmailError,
-  UnauthorizedError,
-  ServerError
+  UnauthorizedError
 } = require('../utils/errors');
 const { checkEmailExistence, createUser, findUser, updateUserPassword } = require('../model/users');
-
-// ENV KEY
-const TOKEN_PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY;
-const TOKEN_ISSUER = process.env.TOKEN_ISSUER;
-const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
-
-if (!TOKEN_PRIVATE_KEY || !TOKEN_ISSUER) {
-  throw new Error('환경변수가 제대로 설정되지 않았습니다.');
-}
-
-/** 비밀번호 해싱 */
-const hashPassword = async (password) => {
-  try {
-    return await bcrypt.hash(password, saltRounds);
-  } catch (error) {
-    throw new ServerError('비밀번호 해싱 중 에러 발생');
-  }
-};
+const { hashPassword, comparePassword } = require('../utils/authUtils');
 
 /** 회원가입 */
 const joinUser = asyncHandler(async (req, res) => {
@@ -64,16 +44,13 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   // 비밀번호 검증
-  const matchPassword = await bcrypt.compare(password, loginUser.password);
+  const matchPassword = await comparePassword(password, loginUser.password);
   if (!matchPassword) {
     throw new UnauthorizedError('비밀번호 불일치', 'ER_NOT_MATCHED_PASSWORD');
   }
 
   // 토큰 생성
-  const token = jwt.sign({ email: loginUser.email, id: loginUser.id }, TOKEN_PRIVATE_KEY, {
-    expiresIn: '30m',
-    issuer: TOKEN_ISSUER
-  });
+  const token = generateToken(loginUser);
 
   res
     .status(StatusCodes.OK)
