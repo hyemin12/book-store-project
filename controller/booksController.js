@@ -11,7 +11,7 @@ const DEFAULT_LIMIT = 6;
  * @param category_id: 카테고리별로 조회할 때 사용
  * @param new: 신간을 조회할 때 사용
  * @param page: 페이지 (입력하지 않으면 기본값으로 1 설정)
- * @param limit: 전달받을 개수 (입력하지 않으면 기본값으로 8 설정)
+ * @param limit: 전달받을 개수 (입력하지 않으면 기본값으로 6 설정)
  */
 const getBooks = asyncHandler(async (req, res) => {
   const { categoryId, new: fetchNewBooks, page, limit } = camelcaseKeys(req.query);
