@@ -1,22 +1,17 @@
 const pool = require('../mysql');
 const checkDataExistence = require('../utils/checkDataExistence');
 const { getConnection, releaseConnection } = require('../utils/connectionUtil');
-const { throwError } = require('../utils/errors');
 
 const checkDeliveryExistence = async ({ recipient, address, contact, conn }) => {
-  try {
-    const sql = `
+  const sql = `
       SELECT * from delivery 
       WHERE recipient = ? AND address = ? AND contact = ?
       `;
-    const values = [recipient, address, contact];
+  const values = [recipient, address, contact];
 
-    const { isExist, rows } = await checkDataExistence(sql, values, conn);
+  const { isExist, rows } = await checkDataExistence(sql, values, conn);
 
-    return { isExist, dbDeliveryId: rows[0].id };
-  } catch (error) {
-    throwError(error);
-  }
+  return { isExist, dbDeliveryId: rows[0].id };
 };
 
 const createDelivery = async ({ recipient, address, contact, conn }) => {

@@ -1,6 +1,5 @@
 const pool = require('../mysql');
 const checkDataExistence = require('../utils/checkDataExistence');
-const { throwError } = require('../utils/errors');
 
 const checkLikeExistence = async ({ userId, bookId }) => {
   const sql = 'SELECT * FROM likes WHERE user_id = ? AND book_id = ?';
