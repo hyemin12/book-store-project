@@ -1,11 +1,18 @@
 const { StatusCodes } = require('http-status-codes');
 const camelcaseKeys = require('camelcase-keys');
+const asyncHandler = require('express-async-handler');
 const pool = require('../mysql');
 
-const { handleError, throwError } = require('../utils/handleError');
-const checkDataExistence = require('../utils/checkDataExistence');
-
-const checkDeliveryExistenceQuery = 'SELECT * from delivery WHERE recipient = ? AND address = ? AND contact = ?';
+const { DatabaseError } = require('../utils/errors');
+const {
+  checkDeliveryExistence,
+  createDelivery,
+  createOrder,
+  createOrderDetails,
+  findOrderList,
+  findOrderDetails
+} = require('../model/orders');
+const { deleteCartItems } = require('../model/carts');
 
 /* 주문 프로세스
  * 1. 클라이언트에서 전달받은 delivery 데이터가 delivery 테이블에 존재하는지 확인
@@ -16,52 +23,44 @@ const checkDeliveryExistenceQuery = 'SELECT * from delivery WHERE recipient = ? 
  * 4. 장바구니 목록에서 주문한 도서 목록 삭제하기
  */
 /** 주문하기 (결제 하기) */
-const postOrder = async (req, res) => {
-  const { books, delivery, payment, totalPrice, totalQuantity, firstBookTitle } = camelcaseKeys(req.body);
-
-  const userId = req.user?.id;
-
-  const sqlDelivery = `
-    INSERT INTO delivery 
-    (recipient,address,contact) 
-    VALUES (?,?,?)
-  `;
-  const valuesDelivery = [delivery.recipient, delivery.address, delivery.contact];
-
-  let deliveryId = 0;
-  const booksLength = books.length - 1;
-
-  const conn = await pool.getConnection();
-
+const postOrder = async (req, res, next) => {
   try {
+    const { books, delivery, payment, totalPrice, totalQuantity, firstBookTitle } = camelcaseKeys(req.body);
+    const userId = req.user?.id;
+
+    const conn = await pool.getConnection();
+
     await conn.beginTransaction();
 
     // Step 1: Delivery 정보 확인 및 추가
-    const { isExist, rows: rowsExistDelivery } = await checkDataExistence(checkDeliveryExistenceQuery, valuesDelivery);
+    let deliveryId;
+    const { isExist, dbDeliveryId } = await checkDeliveryExistence({ ...delivery, conn });
+
     if (isExist) {
-      deliveryId = rowsExistDelivery[0].id;
+      deliveryId = dbDeliveryId;
     } else {
-      const [rows] = await conn.execute(sqlDelivery, valuesDelivery);
-      deliveryId = rows.insertId;
+      const { result, dbDeliveryId } = await createDelivery({ ...delivery });
+      if (!result) {
+        throw new DatabaseError();
+      }
+
+      deliveryId = dbDeliveryId;
     }
 
-    const sqlOrders = `
-      INSERT INTO orders
-      (book_title, total_quantity, total_price, payment, delivery_id, user_id)
-      VALUES (?,?,?,?,?,?)
-    `;
-    const valuesOrders = [firstBookTitle, totalQuantity, totalPrice, payment, deliveryId, userId];
-
     // Step 2: Orders 테이블에 주문 내역 추가
-    const [rows] = await conn.execute(sqlOrders, valuesOrders);
+    const { result: step2Result, orderId } = await createOrder({
+      bookTitle: firstBookTitle,
+      totalQuantity,
+      totalPrice,
+      payment,
+      deliveryId,
+      userId,
+      conn
+    });
+    if (!step2Result || !orderId) {
+      throw new DatabaseError();
+    }
 
-    const orderId = rows.insertId;
-
-    const sqlOrderedBook = `
-      INSERT INTO orderedbook
-      (order_id, book_id, quantity)
-      VALUES (?,?,?)${', (?,?,?)'.repeat(booksLength)}
-    `;
     const valuesOrderedBook = [];
     const valuesDeleteCart = [];
     books.forEach((item) => {
@@ -70,70 +69,42 @@ const postOrder = async (req, res) => {
     });
 
     // Step 3: OrderedBook 테이블에 주문한 도서 목록 추가
-    await conn.execute(sqlOrderedBook, valuesOrderedBook);
-
-    const sqlDeleteCart = `
-    DELETE FROM cartItems
-    WHERE id IN (?${',?'.repeat(booksLength)})
-  `;
+    const loopCount = books.length - 1;
+    const step3Result = await createOrderDetails({ count: loopCount, values: valuesOrderedBook, conn });
+    if (!step3Result) {
+      throw new DatabaseError();
+    }
 
     // Step 4: 장바구니 목록에서 주문한 도서 목록 삭제
-    const [result] = await conn.execute(sqlDeleteCart, valuesDeleteCart);
-
-    if (result.affectedRows > 0) {
-      // Step 5: 변경내역 확정
-      await conn.commit();
-      res.status(StatusCodes.OK).send({ message: '결제 성공 및 장바구니 아이템 삭제' });
-    } else {
-      console.error('장바구니 아이템 삭제 실패');
-      throwError('ER_UNPROCESSABLE_ENTITY');
+    const step4Result = await deleteCartItems({ idArr: valuesDeleteCart, count: loopCount, conn });
+    if (!step4Result) {
+      throw new DatabaseError();
     }
+
+    await conn.commit();
+    res.status(StatusCodes.OK).send({ message: '결제 성공 및 장바구니 아이템 삭제' });
   } catch (err) {
     await conn.rollback();
-    handleError(res, err);
+    next(err);
   } finally {
     if (conn) conn.release();
   }
 };
 
 /** 주문 내역 조회 */
-const getOrders = async (req, res) => {
+const getOrders = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
+  const lists = await findOrderList({ userId });
 
-  const sql = `
-    SELECT orders.id, created_at, recipient, address, contact, total_quantity, total_price
-    FROM orders 
-    LEFT JOIN delivery ON orders.delivery_id = delivery.id
-    WHERE user_id = ? 
-  `;
-  const values = [userId];
-
-  try {
-    const [rows] = await pool.execute(sql, values);
-    res.status(StatusCodes.OK).send({ lists: rows });
-  } catch (err) {
-    handleError(res, err);
-  }
-};
+  res.status(StatusCodes.OK).send({ lists });
+});
 
 /** 주문 내역 상세 조회 */
-const getOrderDetail = async (req, res) => {
+const getOrderDetail = asyncHandler(async (req, res) => {
   const { orderId } = camelcaseKeys(req.params);
 
-  const sql = `
-    SELECT book_id, title AS book_title, author, price, quantity
-    FROM orderedbook
-    LEFT JOIN books ON orderedbook.book_id = books.id
-    WHERE order_id = ? 
-  `;
-  const values = [orderId];
-
-  try {
-    const [rows] = await pool.execute(sql, values);
-    res.status(StatusCodes.OK).send({ lists: rows });
-  } catch (err) {
-    handleError(res, err);
-  }
-};
+  const lists = await findOrderDetails({ orderId });
+  res.status(StatusCodes.OK).send({ lists });
+});
 
 module.exports = { postOrder, getOrders, getOrderDetail };

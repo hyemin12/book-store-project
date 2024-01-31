@@ -1,68 +1,44 @@
 const { StatusCodes } = require('http-status-codes');
 const camelcaseKeys = require('camelcase-keys');
-const pool = require('../mysql');
+const asyncHandler = require('express-async-handler');
 
-const { handleError, throwError } = require('../utils/handleError');
-const checkDataExistence = require('../utils/checkDataExistence');
-
-const checkLikeExistenceQuery = 'SELECT * FROM likes WHERE user_id = ? AND book_id = ?';
+const { ConflictError, DatabaseError, NotFoundError } = require('../utils/errors');
+const { checkLikeExistence, addLike, deleteLikeDB } = require('../model/likes');
 
 /** 좋아요 추가 */
-const postLike = async (req, res, next) => {
+const postLike = asyncHandler(async (req, res) => {
   const { bookId } = camelcaseKeys(req.params);
+  const userId = req.user?.id;
 
-  try {
-    const userId = req.user?.id;
-
-    const sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
-    const values = [userId, bookId];
-
-    const { isExist } = await checkDataExistence(checkLikeExistenceQuery, values);
-
-    if (isExist) {
-      throwError('ER_ALREADY_EXISTS_LIKE');
-    }
-
-    const [rows] = await pool.execute(sql, values);
-
-    if (rows.affectedRows > 0) {
-      res.status(StatusCodes.CREATED).send({ message: '좋아요 추가 성공' });
-    } else {
-      throwError('ER_UNPROCESSABLE_ENTITY');
-    }
-  } catch (err) {
-    handleError(res, err);
+  const isExist = await checkLikeExistence({ userId, bookId });
+  if (isExist) {
+    throw new ConflictError();
   }
-};
+
+  const result = await addLike({ userId, bookId });
+  if (!result) {
+    throw new DatabaseError();
+  }
+
+  res.status(StatusCodes.CREATED).send({ message: '좋아요 추가 성공' });
+});
 
 /** 좋아요 삭제 */
-const deleteLike = async (req, res, next) => {
+const deleteLike = asyncHandler(async (req, res) => {
   const { bookId } = camelcaseKeys(req.params);
+  const userId = req.user?.id;
 
-  try {
-    const userId = req.user?.id;
-
-    const sql = `
-    DELETE FROM likes
-    WHERE user_id = ? AND book_id = ?`;
-    const values = [userId, bookId];
-
-    const { isExist } = await checkDataExistence(checkLikeExistenceQuery, values);
-
-    if (!isExist) {
-      throwError('ER_NOT_FOUND');
-    }
-
-    const [rows] = await pool.execute(sql, values);
-
-    if (rows.affectedRows > 0) {
-      res.status(StatusCodes.OK).send({ message: '좋아요 삭제 성공' });
-    } else {
-      throwError('ER_UNPROCESSABLE_ENTITY');
-    }
-  } catch (err) {
-    handleError(res, err);
+  const isExist = await checkLikeExistence({ userId, bookId });
+  if (isExist) {
+    throw new NotFoundError();
   }
-};
+
+  const result = await deleteLikeDB({ userId, bookId });
+  if (!result) {
+    throw new DatabaseError();
+  }
+
+  res.status(StatusCodes.OK).send({ message: '좋아요 삭제 성공' });
+});
 
 module.exports = { postLike, deleteLike };
