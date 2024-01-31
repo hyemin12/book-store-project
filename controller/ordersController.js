@@ -5,12 +5,11 @@ const pool = require('../mysql');
 
 const { DatabaseError } = require('../utils/errors');
 const {
-  checkDeliveryExistence,
-  createDelivery,
   createOrder,
   createOrderDetails,
   findOrderList,
-  findOrderDetails
+  findOrderDetails,
+  findOrCreateDelivery
 } = require('../model/orders');
 const { deleteCartItems } = require('../model/carts');
 
@@ -33,19 +32,7 @@ const postOrder = async (req, res, next) => {
     await conn.beginTransaction();
 
     // Step 1: Delivery 정보 확인 및 추가
-    let deliveryId;
-    const { isExist, dbDeliveryId } = await checkDeliveryExistence({ ...delivery, conn });
-
-    if (isExist) {
-      deliveryId = dbDeliveryId;
-    } else {
-      const { result, dbDeliveryId } = await createDelivery({ ...delivery });
-      if (!result) {
-        throw new DatabaseError();
-      }
-
-      deliveryId = dbDeliveryId;
-    }
+    const deliveryId = await findOrCreateDelivery(delivery, conn);
 
     // Step 2: Orders 테이블에 주문 내역 추가
     const { result: step2Result, orderId } = await createOrder({

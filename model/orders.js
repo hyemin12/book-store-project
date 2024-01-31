@@ -26,7 +26,21 @@ const createDelivery = async ({ recipient, address, contact, conn }) => {
   const [rows] = await connection.execute(sql, values);
   releaseConnection(connection, conn);
 
-  return { result: rows.affectedRows > 0, dbDeliveryId: rows.insertId };
+  const isSuccess = rows.affectedRows > 0;
+  return { success: isSuccess, dbDeliveryId: isSuccess ? rows.insertId : null };
+};
+
+const findOrCreateDelivery = async (deliveryData, conn) => {
+  const { isExist, dbDeliveryId } = await checkDeliveryExistence({ ...deliveryData, conn });
+
+  if (isExist) return dbDeliveryId;
+
+  const { success, dbDeliveryId: createNewDBDeliveryId } = await createDelivery({ ...deliveryData });
+  if (!success) {
+    throw new DatabaseError();
+  }
+
+  return createNewDBDeliveryId;
 };
 
 const createOrder = async ({ bookTitle, totalQuantity, totalPrice, payment, deliveryId, userId, conn }) => {
@@ -84,6 +98,7 @@ const findOrderDetails = async ({ orderId }) => {
 };
 
 module.exports = {
+  findOrCreateDelivery,
   checkDeliveryExistence,
   createDelivery,
   createOrder,
