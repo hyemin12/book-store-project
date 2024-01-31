@@ -7,7 +7,7 @@ const checkCartItemExistence = async ({ userId, bookId }) => {
   const values = [userId, bookId];
   const { isExist, rows } = await checkDataExistence(sql, values);
 
-  return { isExist, cartItemId: rows[0].id, dbQuantity: rows[0].quantity };
+  return { isExist, cartItemId: rows[0].id, cartItemDBQuantity: rows[0].quantity };
 };
 
 const findCartItems = async ({ userId, selected }) => {

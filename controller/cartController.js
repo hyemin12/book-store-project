@@ -24,9 +24,9 @@ const addToCart = asyncHandler(async (req, res) => {
   }
 
   // Step 2: 장바구니에 이미 담겨있는 아이템인지 확인
-  const { isExist, cartItemId, dbQuantity } = await checkCartItemExistence();
+  const { isExist, cartItemId, cartItemDBQuantity } = await checkCartItemExistence();
   if (isExist) {
-    const result = await updateCartItem({ id: cartItemId, quantity: dbQuantity + 1 });
+    const result = await updateCartItem({ id: cartItemId, quantity: cartItemDBQuantity + 1 });
     if (!result) {
       throw new DatabaseError();
     }
