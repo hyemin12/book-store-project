@@ -59,7 +59,7 @@ const loginUser = asyncHandler(async (req, res) => {
       // https 연결에서만 쿠키 발급되도록 설정
       secure: process.env.NODE_ENV === 'production'
     })
-    .send({ message: '로그인 성공' });
+    .send({ ...loginUser, token });
   console.log(token);
 });
 
