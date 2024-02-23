@@ -12,6 +12,14 @@ app.listen(PORT, () => {
   console.log(`server is open! port number is ${PORT}`);
 });
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 const userRouter = require('./routes/users');
 const booksRouter = require('./routes/books');
 const categoryRouter = require('./routes/category');
