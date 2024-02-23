@@ -9,7 +9,7 @@ const {
   UnauthorizedError
 } = require('../utils/errors');
 const { checkEmailExistence, createUser, findUser, updateUserPassword } = require('../model/users');
-const { hashPassword, comparePassword } = require('../utils/authUtils');
+const { hashPassword, comparePassword, generateToken } = require('../utils/authUtils');
 
 /** 회원가입 */
 const joinUser = asyncHandler(async (req, res) => {
