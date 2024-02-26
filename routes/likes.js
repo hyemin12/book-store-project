@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { postLike, deleteLike } = require('../controller/likesController');
+const { postLike, deleteLike } = require('../controller/likes.controller');
 const { validateLikes } = require('../validators/likes');
 const ensureAuthorization = require('../middleware/ensureAuthorization');
 

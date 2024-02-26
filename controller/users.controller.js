@@ -8,7 +8,7 @@ const {
   NotFoundEmailError,
   UnauthorizedError
 } = require('../utils/errors');
-const { checkEmailExistence, createUser, findUser, updateUserPassword } = require('../model/users');
+const { checkEmailExistence, createUser, findUser, updateUserPassword } = require('../model/users.model');
 const { hashPassword, comparePassword, generateToken } = require('../utils/authUtils');
 
 /** 회원가입 */

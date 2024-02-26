@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { getBooks, getSearchBooks, getIndividualBook } = require('../controller/booksController');
+const { getBooks, getSearchBooks, getIndividualBook } = require('../controller/books.controller');
 const { validatesGetBooks, validatesSearchBooks, validatesBook } = require('../validators/books');
 const ensureAuthorization = require('../middleware/ensureAuthorization');
 

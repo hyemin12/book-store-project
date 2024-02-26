@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { validatePostOrder, validateGetOrderDetail } = require('../validators/orders');
 
-const { postOrder, getOrders, getOrderDetail } = require('../controller/ordersController');
+const { postOrder, getOrders, getOrderDetail } = require('../controller/orders.controller');
 const ensureAuthorization = require('../middleware/ensureAuthorization');
 
 router.route('/').post(validatePostOrder, ensureAuthorization(), postOrder).get(ensureAuthorization(), getOrders);

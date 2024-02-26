@@ -10,8 +10,8 @@ const {
   findOrderList,
   findOrderDetails,
   findOrCreateDelivery
-} = require('../model/orders');
-const { deleteCartItems } = require('../model/carts');
+} = require('../model/orders.model');
+const { deleteCartItems } = require('../model/carts.model');
 
 /* 주문 프로세스
  * 1. 클라이언트에서 전달받은 delivery 데이터가 delivery 테이블에 존재하는지 확인

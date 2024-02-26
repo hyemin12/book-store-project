@@ -9,8 +9,8 @@ const {
   createCartItem,
   updateCartItem,
   deleteCartItems
-} = require('../model/carts');
-const { findBook } = require('../model/books');
+} = require('../model/carts.model');
+const { findBook } = require('../model/books.model');
 
 /** 장바구니에 아이템 추가 */
 const addToCart = asyncHandler(async (req, res) => {

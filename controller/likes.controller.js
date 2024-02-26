@@ -3,7 +3,7 @@ const camelcaseKeys = require('camelcase-keys');
 const asyncHandler = require('express-async-handler');
 
 const { ConflictError, DatabaseError, NotFoundError } = require('../utils/errors');
-const { checkLikeExistence, addLike, deleteLikeDB } = require('../model/likes');
+const { checkLikeExistence, addLike, deleteLikeDB } = require('../model/likes.model');
 
 /** 좋아요 추가 */
 const postLike = asyncHandler(async (req, res) => {

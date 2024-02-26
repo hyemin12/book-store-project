@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { joinUser, loginUser, requestResetPassword, resetPassword } = require('../controller/usersController');
+const { joinUser, loginUser, requestResetPassword, resetPassword } = require('../controller/users.controller');
 const { validatesLoginAndReset, validatesJoin, validatesEmail } = require('../validators/users');
 
 router.post('/join', validatesJoin, joinUser);
