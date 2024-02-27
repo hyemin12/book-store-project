@@ -84,7 +84,7 @@ const findQuery = async ({ query, limit, offset }) => {
     WHERE title LIKE CONCAT("%", ?, "%") 
     LIMIT ${limit} OFFSET ${offset}
   `;
-  const values = [query, limit, offset];
+  const values = [query];
 
   const [books] = await pool.execute(sql, values);
   const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
