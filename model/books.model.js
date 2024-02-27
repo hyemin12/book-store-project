@@ -5,14 +5,14 @@ const pool = require('../mysql');
  */
 const buildBaseBookQuery = (userId) => {
   const baseQuery = `
-    SELECT SQL_CALC_FOUND_ROWS books.*,
+    SELECT SQL_CALC_FOUND_ROWS books.*, category.category AS category_name,
     (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes
     FROM books
     LEFT JOIN category ON category.category_id = books.category_id
   `;
 
   const userQuery = `
-    SELECT SQL_CALC_FOUND_ROWS books.*,
+    SELECT SQL_CALC_FOUND_ROWS books.*,category.category AS category_name,
     (SELECT count(*) FROM bookstore.likes WHERE book_id = books.id) AS likes,
     (SELECT count(*) FROM bookstore.likes WHERE user_id = ? AND book_id = books.id) AS liked
     FROM books
