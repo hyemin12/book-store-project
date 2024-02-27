@@ -43,7 +43,7 @@ const findBooks = async ({ categoryId, fetchNewBooks, userId, limit, offset }) =
 };
 
 const findBook = async ({ userId, bookId }) => {
-  const sql = buildBaseBookQuery(userId);
+  let sql = buildBaseBookQuery(userId);
   sql += ' WHERE books.id = ?';
 
   const values = userId ? [userId, bookId] : [bookId];
