@@ -29,7 +29,7 @@ const deleteLike = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
 
   const isExist = await checkLikeExistence({ userId, bookId });
-  if (isExist) {
+  if (!isExist) {
     throw new NotFoundError();
   }
 
