@@ -15,16 +15,18 @@ const { findBook } = require('../model/books.model');
 /** 장바구니에 아이템 추가 */
 const addToCart = asyncHandler(async (req, res) => {
   const { bookId, quantity } = camelcaseKeys(req.body);
+  const numberBookId = Number(bookId);
+  const numberQuantity = Number(quantity);
   const userId = req.user?.id;
 
   // Step 1: 도서가 DB에 존재하는지 확인
-  const book = await findBook({ bookId });
+  const book = await findBook({ bookId: numberBookId });
   if (!book) {
     throw new NotFoundError();
   }
 
   // Step 2: 장바구니에 이미 담겨있는 아이템인지 확인
-  const { isExist, cartItemId, cartItemDBQuantity } = await checkCartItemExistence();
+  const { isExist, cartItemId, cartItemDBQuantity } = await checkCartItemExistence({ userId, bookId: numberBookId });
   if (isExist) {
     const result = await updateCartItem({ id: cartItemId, quantity: cartItemDBQuantity + 1 });
     if (!result) {
@@ -33,12 +35,12 @@ const addToCart = asyncHandler(async (req, res) => {
 
     return res.status(StatusCodes.OK).send({
       message: `이미 존재하는 아이템!  수량 추가. 
-          변경된 수량: ${addQuantity}`
+          변경된 수량: ${cartItemDBQuantity + 1}`
     });
   }
 
   // Step 3: 장바구니에 담기
-  const result = await createCartItem({ quantity, bookId, userId });
+  const result = await createCartItem({ quantity: numberQuantity, bookId: numberBookId, userId });
   if (!result) {
     throw new DatabaseError();
   }

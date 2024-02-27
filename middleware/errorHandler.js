@@ -28,11 +28,11 @@ const errorHandler = (error, req, res, next) => {
   }
 
   // 기타 오류
-  res.status(statusCodes.INTERNAL_SERVER_ERROR).send({
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
     error: {
-      message: err.message || '서버 내부 오류가 발생했습니다.',
+      message: error.message || '서버 내부 오류가 발생했습니다.',
       code: 'ER_UNKNOWN',
-      status: statusCodes.INTERNAL_SERVER_ERROR
+      status: StatusCodes.INTERNAL_SERVER_ERROR
     }
   });
 };

@@ -7,7 +7,7 @@ const checkCartItemExistence = async ({ userId, bookId }) => {
   const values = [userId, bookId];
   const { isExist, rows } = await checkDataExistence(sql, values);
 
-  return { isExist, cartItemId: rows[0].id, cartItemDBQuantity: rows[0].quantity };
+  return { isExist, cartItemId: rows[0]?.id, cartItemDBQuantity: rows[0]?.quantity };
 };
 
 const findCartItems = async ({ userId, selected }) => {
@@ -37,7 +37,7 @@ const createCartItem = async ({ quantity, bookId, userId }) => {
   return rows.affectedRows > 0;
 };
 
-const updateCartItem = async () => {
+const updateCartItem = async ({ quantity, id }) => {
   const sql = 'UPDATE cartItems SET quantity = ? WHERE id = ?';
   const values = [quantity, id];
 
