@@ -1,6 +1,6 @@
 const pool = require('../mysql');
 
-const getConnection = async (conn) => {
+const fetchConnection = async (conn) => {
   const connection = conn ?? (await pool.getConnection());
   return connection;
 };
@@ -11,4 +11,4 @@ const releaseConnection = (connection, conn) => {
   }
 };
 
-module.exports = { getConnection, releaseConnection };
+module.exports = { getConnection: fetchConnection, releaseConnection };

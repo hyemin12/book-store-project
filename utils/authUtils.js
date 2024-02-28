@@ -29,7 +29,7 @@ const comparePassword = async (password, loginUserPassword) => {
 const generateToken = (loginUser) => {
   const { email, id } = loginUser;
   return jwt.sign({ email, id }, TOKEN_PRIVATE_KEY, {
-    expiresIn: '30m',
+    expiresIn: '8h',
     issuer: TOKEN_ISSUER
   });
 };

@@ -40,12 +40,12 @@ const addToCart = asyncHandler(async (req, res) => {
   }
 
   // Step 3: 장바구니에 담기
-  const result = await createCartItem({ quantity: numberQuantity, bookId: numberBookId, userId });
-  if (!result) {
+  const { cartId } = await createCartItem({ quantity: numberQuantity, bookId: numberBookId, userId });
+  if (!cartId) {
     throw new DatabaseError();
   }
 
-  res.status(StatusCodes.OK).send({ message: '장바구니에 추가완료 ' });
+  res.status(StatusCodes.OK).send({ id: cartId, message: '장바구니에 추가완료 ' });
 });
 
 /** 장바구니의 아이템 조회
@@ -54,16 +54,15 @@ const addToCart = asyncHandler(async (req, res) => {
 const getCartsItems = asyncHandler(async (req, res) => {
   const { selected } = req.body;
   const userId = req.user?.id;
-
   const lists = await findCartItems({ userId, selected });
   res.status(StatusCodes.OK).send({ lists });
 });
 
 /** 장바구니의 아이템 삭제 */
 const deleteCartsItem = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id, idArr } = req.params;
 
-  const result = await deleteCartItems({ id });
+  const result = await deleteCartItems({ id, idArr });
   if (!result) {
     throw new DatabaseError();
   }

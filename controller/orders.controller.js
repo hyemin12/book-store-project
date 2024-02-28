@@ -23,11 +23,10 @@ const { deleteCartItems } = require('../model/carts.model');
  */
 /** 주문하기 (결제 하기) */
 const postOrder = async (req, res, next) => {
+  const conn = await pool.getConnection();
   try {
     const { books, delivery, payment, totalPrice, totalQuantity, firstBookTitle } = camelcaseKeys(req.body);
     const userId = req.user?.id;
-
-    const conn = await pool.getConnection();
 
     await conn.beginTransaction();
 
@@ -63,7 +62,7 @@ const postOrder = async (req, res, next) => {
     }
 
     // Step 4: 장바구니 목록에서 주문한 도서 목록 삭제
-    const step4Result = await deleteCartItems({ idArr: valuesDeleteCart, count: loopCount, conn });
+    const step4Result = await deleteCartItems({ idArr: valuesDeleteCart, conn });
     if (!step4Result) {
       throw new DatabaseError();
     }
@@ -74,7 +73,9 @@ const postOrder = async (req, res, next) => {
     await conn.rollback();
     next(err);
   } finally {
-    if (conn) conn.release();
+    if (conn) {
+      conn.release();
+    }
   }
 };
 

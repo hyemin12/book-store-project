@@ -34,7 +34,7 @@ const createCartItem = async ({ quantity, bookId, userId }) => {
   const values = [bookId, quantity, userId];
 
   const [rows] = await pool.execute(sql, values);
-  return rows.affectedRows > 0;
+  if (rows.affectedRows > 0) return { cartId: rows.insertId };
 };
 
 const updateCartItem = async ({ quantity, id }) => {
@@ -45,14 +45,15 @@ const updateCartItem = async ({ quantity, id }) => {
   return rows.affectedRows > 0;
 };
 
-const deleteCartItems = async ({ id, idArr, count, conn }) => {
+const deleteCartItems = async ({ id, idArr, conn }) => {
+  const count = idArr?.length - 1;
   const sql = `
-      DELETE FROM cartItems
-      WHERE id IN (?${',?'.repeat(count)})
-    `;
-  const values = count ? idArr : [id];
+  DELETE FROM cartItems
+  WHERE id IN (?${',?'.repeat(count)})
+  `;
+  const values = count !== undefined ? idArr : [id];
 
-  const connection = getConnection(conn);
+  const connection = await getConnection(conn);
   const [rows] = await connection.execute(sql, values);
   releaseConnection(connection, conn);
 

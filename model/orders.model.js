@@ -11,7 +11,7 @@ const checkDeliveryExistence = async ({ recipient, address, contact, conn }) => 
 
   const { isExist, rows } = await checkDataExistence(sql, values, conn);
 
-  return { isExist, dbDeliveryId: rows[0].id };
+  return { isExist, dbDeliveryId: rows[0]?.id };
 };
 
 const createDelivery = async ({ recipient, address, contact, conn }) => {
@@ -22,7 +22,7 @@ const createDelivery = async ({ recipient, address, contact, conn }) => {
   `;
   const values = [recipient, address, contact];
 
-  const connection = getConnection(conn);
+  const connection = await getConnection(conn);
   const [rows] = await connection.execute(sql, values);
   releaseConnection(connection, conn);
 
@@ -51,7 +51,7 @@ const createOrder = async ({ bookTitle, totalQuantity, totalPrice, payment, deli
     `;
   const values = [bookTitle, totalQuantity, totalPrice, payment, deliveryId, userId];
 
-  const connection = getConnection(conn);
+  const connection = await getConnection(conn);
   const [rows] = await connection.execute(sql, values);
   releaseConnection(connection, conn);
 
@@ -64,8 +64,7 @@ const createOrderDetails = async ({ count, values, conn }) => {
       (order_id, book_id, quantity)
       VALUES (?,?,?)${', (?,?,?)'.repeat(count)}
     `;
-
-  const connection = getConnection(conn);
+  const connection = await getConnection(conn);
   const [rows] = await connection.execute(sql, values);
   releaseConnection(connection, conn);
 
