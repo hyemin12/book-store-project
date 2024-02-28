@@ -61,7 +61,7 @@ const createOrder = async ({ bookTitle, totalQuantity, totalPrice, payment, deli
 const createOrderDetails = async ({ count, values, conn }) => {
   const sql = `
       INSERT INTO orderedbook
-      (order_id, book_id, quantity)
+      (order_id, book_id, quantity, book_title, payment)
       VALUES (?,?,?)${', (?,?,?)'.repeat(count)}
     `;
   const connection = await getConnection(conn);
@@ -92,7 +92,7 @@ const findOrderDetails = async ({ orderId }) => {
   `;
   const values = [orderId];
 
-  const [rows] = await connection.execute(sql, values);
+  const [rows] = await pool.execute(sql, values);
   return rows;
 };
 
