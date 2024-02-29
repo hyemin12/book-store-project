@@ -65,14 +65,19 @@ const findReviews = async ({ bookId }) => {
 };
 
 const findBestSeller = async ({ categoryId, bookId }) => {
-  const sql = `
+  let sql = `
     SELECT *,
     (SELECT count(*) FROM likes WHERE likes.book_id = books.id) AS likes
-    FROM books 
-    WHERE category_id = ? AND id != ?
-    ORDER BY likes DESC
-    `;
-  const values = [categoryId, bookId];
+    FROM books
+  `;
+  const values = [];
+
+  if (categoryId && bookId) {
+    sql += ' WHERE category_id = ? AND id != ?';
+    values.push(categoryId, bookId);
+  }
+
+  sql += ' ORDER BY likes DESC';
 
   const [bestSeller] = await pool.execute(sql, values);
   return bestSeller;

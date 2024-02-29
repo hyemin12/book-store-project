@@ -49,6 +49,13 @@ const getIndividualBook = asyncHandler(async (req, res) => {
   res.status(StatusCodes.OK).send(result);
 });
 
+/** 인기 많은 도서 조회 */
+const getBestSeller = asyncHandler(async (req, res) => {
+  const books = await findBestSeller({ categoryId: null, bookId: null });
+
+  res.status(StatusCodes.OK).send({ lists: books.slice(0, 8) });
+});
+
 /** 도서 검색
  * @returns {list: 도서목록, pagination: {current_page:현재페이지, total_count: 전체 아이템 수}}
  */
@@ -81,5 +88,6 @@ const calcPagination = (page, limit) => {
 module.exports = {
   getBooks,
   getSearchBooks,
-  getIndividualBook
+  getIndividualBook,
+  getBestSeller
 };
