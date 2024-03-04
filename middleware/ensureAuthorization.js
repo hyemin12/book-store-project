@@ -21,6 +21,16 @@ const decodedJWT = (token) => {
 
 const checkUserExistenceQuery = 'SELECT * from users WHERE id = ?';
 
+const parseCookieHeader = (cookieHeader) => {
+  const cookies = cookieHeader.split(';');
+  let token = null;
+  for (cookie of cookies) {
+    const [key, value] = cookie.split('=');
+    if (key.trim() === 'token') return (token = value);
+  }
+  return token;
+};
+
 /** token을 검증하고, 인증하는 함수
  * @param requireToken 로그인이 꼭 필요한지 여부
  */
@@ -28,7 +38,10 @@ const ensureAuthorization =
   (requireToken = true) =>
   async (req, res, next) => {
     try {
-      const token = req.headers['authorization'];
+      let token = req.headers['authorization'];
+      if (token === '') {
+        token = parseCookieHeader(req.headers.cookie);
+      }
 
       if (!token && requireToken) throw new UnauthorizedError('토큰 없음', 'ER_NO_TOKEN');
 
