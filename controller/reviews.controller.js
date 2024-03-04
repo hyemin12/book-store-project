@@ -16,7 +16,8 @@ const postReview = expressAsyncHandler(async (req, res) => {
   const userId = req.user?.id;
 
   const result = await createReview({ bookId, content, createdAt, score, userId });
-  return res.status(StatusCodes.CREATE).send(result);
+
+  res.status(StatusCodes.CREATED).end();
 });
 
 module.exports = { getReviews, postReview };
