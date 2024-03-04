@@ -52,18 +52,6 @@ const findBook = async ({ userId, bookId }) => {
   return book;
 };
 
-const findReviews = async ({ bookId }) => {
-  const sql = `
-    SELECT 
-    users.email AS author, text, rate, reviews.created_at FROM reviews 
-    LEFT JOIN users ON reviews.user_id = users.id 
-    WHERE book_id = ?`;
-  const values = [bookId];
-
-  const [reviews] = await pool.execute(sql, values);
-  return reviews;
-};
-
 const findBestSeller = async ({ categoryId, bookId }) => {
   let sql = `
     SELECT *,
@@ -97,4 +85,4 @@ const findQuery = async ({ query, limit, offset }) => {
   return { books, totalCount: totalCount.counts };
 };
 
-module.exports = { findBooks, findBook, findReviews, findBestSeller, findQuery };
+module.exports = { findBooks, findBook, findBestSeller, findQuery };

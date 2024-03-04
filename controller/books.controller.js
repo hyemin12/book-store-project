@@ -2,7 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 const camelcaseKeys = require('camelcase-keys');
 const asyncHandler = require('express-async-handler');
 
-const { findBooks, findBook, findReviews, findBestSeller, findQuery } = require('../model/books.model');
+const { findBooks, findBook, findBestSeller, findQuery } = require('../model/books.model');
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 6;
@@ -41,11 +41,9 @@ const getIndividualBook = asyncHandler(async (req, res) => {
   const book = await findBook({ bookId, userId });
   const categoryId = book.category_id;
 
-  const reviews = await findReviews({ bookId });
-
   const bestSellers = await findBestSeller({ categoryId, bookId });
 
-  const result = { ...book, reviews, bestSellers };
+  const result = { ...book, bestSellers };
   res.status(StatusCodes.OK).send(result);
 });
 
