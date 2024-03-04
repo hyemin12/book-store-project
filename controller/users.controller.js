@@ -54,7 +54,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   res
     .status(StatusCodes.OK)
-    .cookie('access_token', token, {
+    .cookie('token', token, {
       httpOnly: true,
       // https 연결에서만 쿠키 발급되도록 설정
       secure: process.env.NODE_ENV === 'production'
