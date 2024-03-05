@@ -52,9 +52,9 @@ const findBook = async ({ userId, bookId }) => {
   return book;
 };
 
-const findBestSeller = async ({ categoryId, bookId }) => {
+const findBestSeller = async ({ categoryId, bookId, offset, limit }) => {
   let sql = `
-    SELECT *,
+    SELECT SQL_CALC_FOUND_ROWS books.*,
     (SELECT count(*) FROM likes WHERE likes.book_id = books.id) AS likes
     FROM books
   `;
@@ -64,11 +64,15 @@ const findBestSeller = async ({ categoryId, bookId }) => {
     sql += ' WHERE category_id = ? AND id != ?';
     values.push(categoryId, bookId);
   }
-
   sql += ' ORDER BY likes DESC';
 
-  const [bestSeller] = await pool.execute(sql, values);
-  return bestSeller;
+  if (limit) {
+    sql += ` LIMIT ${limit} OFFSET ${offset}`;
+  }
+
+  const [books] = await pool.execute(sql, values);
+  const [[totalCount]] = await pool.execute('SELECT found_rows() as counts');
+  return { books, totalCount: totalCount.counts };
 };
 
 const findQuery = async ({ query, limit, offset }) => {

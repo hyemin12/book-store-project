@@ -49,8 +49,27 @@ const getIndividualBook = asyncHandler(async (req, res) => {
 
 /** 인기 많은 도서 조회 */
 const getBestSeller = asyncHandler(async (req, res) => {
-  const books = await findBestSeller({ categoryId: null, bookId: null });
+  const { page, limit } = camelcaseKeys(req.query);
 
+  if (page && limit) {
+    const { computedLimit, computedPage, offset } = calcPagination(page, limit);
+    const { books, totalCount } = await findBestSeller({
+      categoryId: null,
+      bookId: null,
+      limit: computedLimit,
+      offset
+    });
+    res.status(StatusCodes.OK).send({
+      lists: books,
+      pagination: {
+        current_page: computedPage,
+        total_count: totalCount
+      }
+    });
+    return;
+  }
+
+  const books = await findBestSeller({ categoryId: null, bookId: null });
   res.status(StatusCodes.OK).send({ lists: books.slice(0, 8) });
 });
 
