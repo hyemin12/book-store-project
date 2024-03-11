@@ -38,10 +38,7 @@ const ensureAuthorization =
   (requireToken = true) =>
   async (req, res, next) => {
     try {
-      let token = req.headers['authorization'];
-      if (token === '') {
-        token = parseCookieHeader(req.headers.cookie);
-      }
+      const token = parseCookieHeader(req.headers.cookie);
 
       if (!token && requireToken) throw new UnauthorizedError('토큰 없음', 'ER_NO_TOKEN');
 
