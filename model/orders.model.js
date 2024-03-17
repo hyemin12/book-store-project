@@ -61,7 +61,7 @@ const createOrder = async ({ bookTitle, totalQuantity, totalPrice, payment, deli
 const createOrderDetails = async ({ count, values, conn }) => {
   const sql = `
       INSERT INTO orderedbook
-      (order_id, book_id, quantity, book_title, payment)
+      (order_id, book_id, quantity)
       VALUES (?,?,?)${', (?,?,?)'.repeat(count)}
     `;
   const connection = await getConnection(conn);
