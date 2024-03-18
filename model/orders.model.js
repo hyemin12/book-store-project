@@ -73,7 +73,7 @@ const createOrderDetails = async ({ count, values, conn }) => {
 
 const findOrderList = async ({ userId }) => {
   const sql = `
-      SELECT orders.id, created_at, recipient, address, contact, total_quantity, total_price
+      SELECT orders.id, created_at, recipient, address, contact, payment, book_title,total_quantity, total_price
       FROM orders 
       LEFT JOIN delivery ON orders.delivery_id = delivery.id
       WHERE user_id = ? 
